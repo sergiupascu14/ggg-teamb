@@ -56,19 +56,19 @@ The system SHALL provide a sign-out option that ends the current session and ret
 - **WHEN** a signed-out user enters their correct password
 - **THEN** the system restores their session and profile without requiring re-onboarding
 
-### Requirement: Capture office location
-The system SHALL store the user's Building (office location) and Floor Number during onboarding, using the canonical desk allocation enumeration (Tower 3–6, Riviera 3–5).
+### Requirement: Auto-populate office location from the selected employee record
+The system SHALL treat the selected employee's desk assignment from the bundled desk allocation dataset as the source of truth for office location during onboarding. When a selected employee has an assigned desk, the system SHALL auto-fill the desk area and derive the Building, Floor Number, and Zone from that desk code using the canonical desk allocation enumeration (Tower 3–6, Riviera 3–5).
 
-#### Scenario: User selects building and floor
-- **WHEN** the user picks a Building and Floor and continues
-- **THEN** the system persists the Building and Floor Number to the local profile
+#### Scenario: Location derived from selected employee
+- **WHEN** the user selects an employee record that has an assigned desk
+- **THEN** the system auto-fills the desk area and persists the derived Building, Floor Number, and Zone to the local profile
 
-#### Scenario: Required location missing
-- **WHEN** the user attempts to continue without selecting a Building
-- **THEN** the system blocks progress and shows a validation message
+#### Scenario: Missing desk assignment falls back to manual entry
+- **WHEN** the selected employee record has no assigned desk in the dataset
+- **THEN** the system asks the user to enter a desk code manually and derives the location from that desk code before allowing onboarding to complete
 
 ### Requirement: Record specific desk area
-The system SHALL record the user's specific desk area identifier (e.g. "T6-C2-01"), validate it against the desk ID grammar `{Building}{Floor}-{Zone}{Row}-{DeskNum}`, and derive the building, floor, and zone from it. When the selected employee already has an assigned desk, the system SHALL pre-fill it.
+The system SHALL record the user's specific desk area identifier (e.g. "T6-C2-01"), validate it against the desk ID grammar `{Building}{Floor}-{Zone}{Row}-{DeskNum}`, and derive the building, floor, and zone from it. When the selected employee already has an assigned desk, the system SHALL pre-fill it and use that value as the authoritative onboarding location.
 
 #### Scenario: Desk area pre-filled from selection
 - **WHEN** the selected employee has an assigned desk in the dataset
