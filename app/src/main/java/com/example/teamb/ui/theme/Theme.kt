@@ -1,48 +1,51 @@
 package com.example.teamb.ui.theme
 
 import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val GarminLightScheme = lightColorScheme(
+    primary = GarminBlue,
+    onPrimary = CardSurface,
+    primaryContainer = AccentBlue,
+    onPrimaryContainer = GarminBlue,
+    secondary = GarminBlueDark,
+    onSecondary = CardSurface,
+    background = Canvas,
+    onBackground = TextPrimary,
+    surface = CardSurface,
+    onSurface = TextPrimary,
+    surfaceVariant = AccentBlue,
+    onSurfaceVariant = TextSecondary,
+    outline = InputBorder,
+    outlineVariant = CardBorder,
+    error = IssueText,
 )
 
 @Composable
 fun TeamBTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    // The design is a single light Garmin theme; dark/dynamic are intentionally disabled.
+    darkTheme: Boolean = false,
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val window = (view.context as Activity).window
+        window.statusBarColor = Canvas.toArgb()
+        window.navigationBarColor = CardSurface.toArgb()
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
         }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = GarminLightScheme,
         typography = Typography,
-        content = content
+        content = content,
     )
 }

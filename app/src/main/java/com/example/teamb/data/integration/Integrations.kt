@@ -92,7 +92,7 @@ class PhotoIssueCategoryMapper(
                 || "whiteboard" in lower || "projector" in lower -> FeedbackCategory.MEETING_ROOMS
             "bathroom" in lower || "restroom" in lower || "dryer" in lower
                 || "toilet" in lower || "faucet" in lower || "plumbing" in lower -> FeedbackCategory.BATHROOMS
-            "temperature" in lower || "ac" in lower || "air" in lower
+            "temperature" in lower || Regex("\\bac\\b").containsMatchIn(lower) || "air" in lower
                 || "hvac" in lower || "vent" in lower || "heater" in lower -> FeedbackCategory.TEMPERATURE
             "parking" in lower || "car" in lower || "vehicle" in lower
                 || "automobile" in lower -> FeedbackCategory.PARKING

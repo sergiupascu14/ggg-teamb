@@ -3,6 +3,7 @@ package com.example.teamb.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,6 +28,11 @@ import com.example.teamb.ui.newsfeed.NewsfeedScreen
 import com.example.teamb.ui.onboarding.LoginScreen
 import com.example.teamb.ui.onboarding.OnboardingScreen
 import com.example.teamb.ui.profile.ProfileScreen
+import com.example.teamb.ui.theme.AccentBlue
+import com.example.teamb.ui.theme.Canvas
+import com.example.teamb.ui.theme.CardSurface
+import com.example.teamb.ui.theme.GarminBlue
+import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.tickets.TicketsScreen
 
 /**
@@ -54,10 +60,11 @@ fun AppRoot(container: AppContainer) {
 private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
     val navController = rememberNavController()
     Scaffold(
+        containerColor = Canvas,
         bottomBar = {
             val backStackEntry by navController.currentBackStackEntryAsState()
             val currentDest = backStackEntry?.destination
-            NavigationBar {
+            NavigationBar(containerColor = CardSurface) {
                 Tab.entries.forEach { tab ->
                     val selected = currentDest?.hierarchy?.any { it.route == tab.route } == true
                     NavigationBarItem(
@@ -71,6 +78,13 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
                         },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
                         label = { Text(tab.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = GarminBlue,
+                            selectedTextColor = GarminBlue,
+                            indicatorColor = AccentBlue,
+                            unselectedIconColor = TextMuted,
+                            unselectedTextColor = TextMuted,
+                        ),
                     )
                 }
             }

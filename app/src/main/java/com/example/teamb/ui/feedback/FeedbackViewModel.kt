@@ -26,8 +26,9 @@ enum class PhotoDraftStatus {
 
 /** UI state for the feedback form. [form] is the live editable form; the rest is presentation. */
 data class FeedbackUiState(
+    // Default to Positive feedback (encourage appreciation first).
     val form: FeedbackForm = FeedbackForm(
-        sentiment = FeedbackSentiment.ISSUE,
+        sentiment = FeedbackSentiment.POSITIVE,
         message = "",
     ),
     val error: String? = null,
@@ -146,7 +147,7 @@ class FeedbackViewModel(
             val result = repository.submit(form, currentUserId)
             _state.value = FeedbackUiState(
                 form = FeedbackForm(
-                    sentiment = FeedbackSentiment.ISSUE,
+                    sentiment = FeedbackSentiment.POSITIVE,
                     message = "",
                     building = form.building,
                     floor = form.floor,
