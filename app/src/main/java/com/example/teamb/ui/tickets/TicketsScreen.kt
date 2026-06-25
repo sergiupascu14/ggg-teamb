@@ -56,7 +56,7 @@ fun TicketsScreen(container: AppContainer) {
     ) {
         GarminHeader()
         Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 20.dp)) {
-            ScreenTitle("My Tickets")
+            ScreenTitle("My Tickets", subtitle = "Track submitted issue requests.")
 
             Box(Modifier.padding(top = 16.dp)) {
                 if (tickets.isEmpty()) {

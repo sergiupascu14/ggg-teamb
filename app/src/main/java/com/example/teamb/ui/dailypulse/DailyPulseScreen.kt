@@ -182,20 +182,20 @@ private fun CheckedInCard() {
                 }
             }
             Text(
-                "You've checked in today.",
+                "You checked in today",
                 style = MaterialTheme.typography.titleLarge,
                 color = TextPrimary,
                 modifier = Modifier.padding(top = 24.dp),
             )
             Text(
-                "See you tomorrow!",
+                "Thanks for sharing your pulse.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 4.dp),
             )
             Box(Modifier.padding(top = 20.dp, bottom = 8.dp)) {
-                OutlinedPillButton(text = "View history", onClick = { }, modifier = Modifier.fillMaxWidth(0.6f))
+                OutlinedPillButton(text = "View trends", onClick = { }, modifier = Modifier.fillMaxWidth(0.6f))
             }
         }
     }

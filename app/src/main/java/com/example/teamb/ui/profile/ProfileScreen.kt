@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,16 +41,17 @@ import com.example.teamb.AppContainer
 import com.example.teamb.data.model.Building
 import com.example.teamb.data.model.Reward
 import com.example.teamb.data.model.UserProfile
+import com.example.teamb.ui.components.BrandGradient
 import com.example.teamb.ui.components.FieldLabel
 import com.example.teamb.ui.components.GarminLogo
 import com.example.teamb.ui.components.OutlinedPillButton
 import com.example.teamb.ui.components.PrimaryButton
 import com.example.teamb.ui.components.SurfaceCard
 import com.example.teamb.ui.theme.AccentBlue
+import com.example.teamb.ui.theme.BrandSky
 import com.example.teamb.ui.theme.CardBorder
 import com.example.teamb.ui.theme.CardSurface
 import com.example.teamb.ui.theme.GarminBlue
-import com.example.teamb.ui.theme.GarminBlueLight
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.util.toDisplayName
@@ -88,7 +88,13 @@ fun ProfileScreen(
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
     ) {
-        GradientHeader(name = profile?.name ?: "Profile")
+        GradientHeader(
+            name = profile?.name ?: "Profile",
+            subtitle = profile?.let { p ->
+                val building = Building.fromCode(p.building)?.label ?: p.building.ifBlank { null }
+                listOfNotNull(building, "Cluj").joinToString(" · ")
+            } ?: "CLOOJ",
+        )
 
         Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 20.dp)) {
             profile?.let { WorkplaceInfoCard(it) }
@@ -127,18 +133,14 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun GradientHeader(name: String) {
+private fun GradientHeader(name: String, subtitle: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = GarminBlue,
         shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
         shadowElevation = 1.dp,
     ) {
-        Box(
-            Modifier.background(
-                Brush.linearGradient(listOf(GarminBlue, GarminBlueLight)),
-            ),
-        ) {
+        Box(Modifier.background(BrandGradient)) {
             Column(Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp)) {
                 GarminLogo(onDark = true)
                 Row(
@@ -150,13 +152,21 @@ private fun GradientHeader(name: String) {
                             Text("👤", style = MaterialTheme.typography.titleLarge)
                         }
                     }
-                    Text(
-                        name.toDisplayName(),
-                        modifier = Modifier.padding(start = 16.dp),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = CardSurface,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
+                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                        Text(
+                            name.toDisplayName(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = CardSurface,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = BrandSky,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
                 }
             }
         }

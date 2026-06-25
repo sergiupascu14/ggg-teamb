@@ -35,20 +35,30 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Brush
 import com.example.teamb.ui.theme.AccentBlue
+import com.example.teamb.ui.theme.BrandCyan
+import com.example.teamb.ui.theme.BrandSky
 import com.example.teamb.ui.theme.CardBorder
 import com.example.teamb.ui.theme.CardSurface
 import com.example.teamb.ui.theme.DisabledFill
 import com.example.teamb.ui.theme.GarminBlue
+import com.example.teamb.ui.theme.GarminBlueMid
+import com.example.teamb.ui.theme.Navy
 import com.example.teamb.ui.theme.TextDisabled
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.theme.TextSecondary
 
-/** The Garmin triangle + wordmark used in every header. */
+/** Brand hero gradient (navy → classic blue → sky), leading with the primary brand color. */
+val BrandGradient: Brush
+    get() = Brush.linearGradient(listOf(Navy, GarminBlueMid, BrandSky))
+
+/** The Garmin triangle + wordmark used in every header. The triangle carries the brand sky/cyan. */
 @Composable
 fun GarminLogo(onDark: Boolean = false) {
     val color = if (onDark) CardSurface else GarminBlue
+    val accent = if (onDark) BrandSky else BrandCyan
     Row(verticalAlignment = Alignment.CenterVertically) {
         Canvas(modifier = Modifier.size(14.dp)) {
             val p = Path().apply {
@@ -57,7 +67,7 @@ fun GarminLogo(onDark: Boolean = false) {
                 lineTo(size.width, size.height)
                 close()
             }
-            drawPath(p, color)
+            drawPath(p, accent)
         }
         Text(
             "GARMIN",
@@ -85,9 +95,14 @@ fun GarminHeader(modifier: Modifier = Modifier) {
     }
 }
 
-/** Large screen title + optional streak line. */
+/** Large screen title + optional streak line and/or muted subtitle. */
 @Composable
-fun ScreenTitle(title: String, streak: String? = null, modifier: Modifier = Modifier) {
+fun ScreenTitle(
+    title: String,
+    streak: String? = null,
+    subtitle: String? = null,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier) {
         Text(title, style = MaterialTheme.typography.headlineSmall, color = TextPrimary)
         if (streak != null) {
@@ -95,6 +110,14 @@ fun ScreenTitle(title: String, streak: String? = null, modifier: Modifier = Modi
                 streak,
                 style = MaterialTheme.typography.titleSmall,
                 color = GarminBlue,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        if (subtitle != null) {
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }

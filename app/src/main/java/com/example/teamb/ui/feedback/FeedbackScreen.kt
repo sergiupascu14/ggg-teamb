@@ -82,7 +82,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun FeedbackScreen(container: AppContainer) {
+fun FeedbackScreen(container: AppContainer, initialCategoryName: String? = null) {
     val vm: FeedbackViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -100,6 +100,15 @@ fun FeedbackScreen(container: AppContainer) {
         profile?.let { p ->
             vm.prefillFromProfile(p.building.ifBlank { null }, p.floor.takeIf { it > 0 }, p.deskArea.ifBlank { null })
         }
+    }
+
+    // Preselect the category chosen on the report step (and default to an Issue report).
+    LaunchedEffect(initialCategoryName) {
+        val category = initialCategoryName
+            ?.let { name -> runCatching { FeedbackCategory.valueOf(name) }.getOrNull() }
+            ?: return@LaunchedEffect
+        vm.setCategory(category)
+        vm.setSentiment(FeedbackSentiment.ISSUE)
     }
 
     val photoLauncher = rememberLauncherForActivityResult(

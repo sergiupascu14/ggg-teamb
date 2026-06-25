@@ -79,7 +79,7 @@ fun NewsfeedScreen(container: AppContainer) {
     ) {
         GarminHeader()
         Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 20.dp)) {
-            ScreenTitle("Community")
+            ScreenTitle("Community", subtitle = "What's happening around CLOOJ.")
 
             Box(Modifier.padding(top = 16.dp)) {
                 FilterChips(
