@@ -1,31 +1,57 @@
-# TeamB
+# TeamB Office
 
-Proiect Android de bază, scris în Kotlin, folosind Jetpack Compose și Material 3.
+An Android app for a Garmin office that turns everyday workplace signal into action — a daily
+"pulse" check-in, a shared freezer tracker, positive **and** issue feedback with on-device AI photo
+categorization, facilities ticketing, a community newsfeed, and gamification (streaks, leaderboard,
+rewards). Built with Kotlin + Jetpack Compose + Material 3.
 
-## Stack
+## Screenshots
 
-- **Limbaj:** Kotlin
-- **UI:** Jetpack Compose + Material 3
-- **Build:** Gradle (Kotlin DSL) cu version catalog (`gradle/libs.versions.toml`)
-- **minSdk:** 24 · **targetSdk / compileSdk:** 35
-- **JDK necesar:** 17–21 (AGP 8.7 **nu** suportă JDK 25 — vezi nota de mai jos)
+| Sign in | Daily Pulse | Freezer |
+|---|---|---|
+| ![Sign in](docs/screenshots/login.png) | ![Daily Pulse](docs/screenshots/daily-pulse.png) | ![Freezer](docs/screenshots/freezer.png) |
 
-## Structură
+| Share Feedback | Community | Profile |
+|---|---|---|
+| ![Share Feedback](docs/screenshots/feedback.png) | ![Community](docs/screenshots/community.png) | ![Profile](docs/screenshots/profile.png) |
+
+| Leaderboard |
+|---|
+| ![Leaderboard](docs/screenshots/leaderboard.png) |
+
+## Features
+
+- **Onboarding & login** — pick your identity from a searchable directory (loaded from the desk
+  allocation dataset), set a local password, sign out / unlock on return.
+- **Daily Pulse** — quick mood check-in with streaks and daily reminder notifications.
+- **Freezer** — check food in/out of the shared freezer with smart cleanup reminders.
+- **Share Feedback** — positive or issue feedback with categories, photos, and **on-device AI photo
+  categorization** (ML Kit) that drafts the issue/category for you; anonymous or public; optional
+  community visibility.
+- **Ticketing** — actionable feedback can raise a facilities ticket (email to #CLU-Facilities or a
+  mock Jira ticket); positive feedback never creates one; track status in "My Tickets".
+- **Community newsfeed** — browse shared feedback, vote, and filter by building/floor.
+- **Gamification** — Daily Pulse streaks, a leaderboard ("Office Champion"), and rewards.
+
+## Privacy
+
+User identities never leave the device. Community records are linked only by an opaque user id;
+display names are resolved locally from the bundled (anonymized) directory. Anonymous submissions
+carry no identity at all.
+
+## Architecture
+
+MVVM + repositories with mockable integration interfaces (directory, ticket router, AI photo
+detector, community store). Local persistence via Room + DataStore; passwords stored as a salted
+hash. The community surface runs on a seeded in-memory store by default, with a Firebase Realtime
+Database implementation ready to enable once a `google-services.json` is supplied.
 
 ```
-app/
-  src/main/
-    java/com/example/teamb/
-      MainActivity.kt          # Activity-ul de pornire (Compose)
-      ui/theme/                # Theme, culori, tipografie
-    res/                       # Resurse (strings, icons, themes)
-    AndroidManifest.xml
-  src/test/                    # Unit tests
-  src/androidTest/             # Instrumented tests
-  build.gradle.kts
-build.gradle.kts               # Config rădăcină
-settings.gradle.kts
-gradle/libs.versions.toml      # Versiuni dependențe
+app/src/main/java/com/example/teamb/
+  AppContainer.kt              # manual DI
+  data/ (db, datastore, desk, integration, community, repository, model, util)
+  notification/                # WorkManager reminders + notifications
+  ui/ (theme, components, navigation, <feature> screens + ViewModels)
 ```
 
 ## Firebase Setup
@@ -38,41 +64,22 @@ Consultă **[README-firebase.md](README-firebase.md)** pentru:
 
 ---
 
-## Rulare
+## Build & run
 
-1. Deschide proiectul în **Android Studio** (Hedgehog sau mai nou). Studio va
-   genera automat `local.properties` cu calea către Android SDK.
-2. Sau, din linie de comandă. **Important:** `java` implicit pe această mașină
-   este JDK 25, incompatibil cu AGP 8.7 — folosește JDK 17–21:
+Requires **JDK 17–21** (AGP 8.7 does not support JDK 25):
 
-   ```sh
-   export ANDROID_HOME="$HOME/Library/Android/sdk"
-   export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+```sh
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export JAVA_HOME="$(/usr/libexec/java_home -v 21)"   # or Android Studio's bundled JBR
 
-   ./gradlew assembleDebug      # build APK debug
-   ./gradlew installDebug       # instalează pe device/emulator conectat
-   ./gradlew testDebugUnitTest  # unit tests
-   ```
+./gradlew assembleDebug                 # build debug APK
+./gradlew installDebug                  # install on a connected device/emulator
+./gradlew jacocoCoverageVerification    # run unit tests + 90% coverage gate
+```
 
-## Status verificat
+Or open the project in Android Studio and run the `app` configuration.
 
-Pe această mașină au fost instalate și testate:
+## Quality
 
-- Android SDK la `~/Library/Android/sdk` (platform 35, build-tools 35.0.0, platform-tools)
-- `local.properties` generat (gitignored)
-- `./gradlew assembleDebug` → **BUILD SUCCESSFUL**, APK: `app/build/outputs/apk/debug/app-debug.apk`
-- `./gradlew testDebugUnitTest` → **BUILD SUCCESSFUL**
-
-### Ca să rulezi efectiv aplicația
-
-Nu există încă device fizic conectat sau emulator (AVD). Alege una:
-
-- **Device fizic:** activează USB debugging, conectează-l, apoi `./gradlew installDebug`.
-- **Emulator:** instalează un system image și creează un AVD:
-
-  ```sh
-  sdkmanager "system-images;android-35;google_apis;arm64-v8a" "emulator"
-  avdmanager create avd -n Pixel35 -k "system-images;android-35;google_apis;arm64-v8a" -d pixel
-  emulator -avd Pixel35 &        # pornește emulatorul
-  ./gradlew installDebug         # instalează aplicația
-  ```
+~136 unit tests; JaCoCo enforces a 90% line-coverage gate on the testable logic (UI, DI, and
+platform-bound integration are excluded from the denominator).

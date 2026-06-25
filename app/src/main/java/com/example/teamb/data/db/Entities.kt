@@ -26,6 +26,7 @@ data class FeedbackEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val category: String,
     val sentiment: String,
+    val issueLabel: String?,
     val message: String,
     val photoUri: String?,
     val anonymous: Boolean,

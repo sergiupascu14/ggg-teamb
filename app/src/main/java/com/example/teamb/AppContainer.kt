@@ -11,7 +11,7 @@ import com.example.teamb.data.db.AppDatabase
 import com.example.teamb.data.desk.DeskAllocationRepository
 import com.example.teamb.data.integration.MockGarminAdDirectoryService
 import com.example.teamb.data.integration.MockJiraTicketRouter
-import com.example.teamb.data.integration.MockPhotoIssueDetector
+import com.example.teamb.data.integration.MlKitPhotoIssueDetector
 import com.example.teamb.data.integration.PhotoIssueDetector
 import com.example.teamb.data.integration.TicketRouter
 import com.google.firebase.database.FirebaseDatabase
@@ -37,7 +37,7 @@ class AppContainer(context: Context) {
 
     val directory by lazy { MockGarminAdDirectoryService(desk) }
     val ticketRouter: TicketRouter by lazy { MockJiraTicketRouter() }
-    val photoDetector: PhotoIssueDetector by lazy { MockPhotoIssueDetector() }
+    val photoDetector: PhotoIssueDetector by lazy { MlKitPhotoIssueDetector(appContext) }
 
     val community: CommunityRepository by lazy {
         FirebaseCommunityRepository(FirebaseDatabase.getInstance().reference)

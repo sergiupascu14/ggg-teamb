@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.security.crypto)
     implementation(libs.coil.compose)
+    implementation(libs.mlkit.image.labeling)
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(platform(libs.firebase.bom))
@@ -112,6 +113,7 @@ private val coverageExclusions = listOf(
     "**/data/community/FirebaseCommunityRepository*.*",
     "**/data/desk/DeskAllocationRepository\$Companion*.*",
     "**/data/integration/MockGarminAdDirectoryService*.*",
+    "**/data/integration/MlKitPhotoIssueDetector*.*",
     "**/notification/**",
     "**/data/util/SystemClock*.*"
 )

@@ -88,8 +88,9 @@ class FreezerRepository(
 // Feedback + Ticketing
 // ---------------------------------------------------------------------------
 data class FeedbackForm(
-    val category: FeedbackCategory,
+    val category: FeedbackCategory? = null,
     val sentiment: FeedbackSentiment,
+    val issueLabel: String? = null,
     val message: String,
     val photoUri: String? = null,
     val anonymous: Boolean = false,
@@ -117,16 +118,21 @@ class FeedbackRepository(
     fun observeFeedback(): Flow<List<FeedbackEntity>> = feedbackDao.observeAll()
 
     /** Validation: category implied by type; message must be non-blank. */
-    fun validate(form: FeedbackForm): String? =
-        if (form.message.isBlank()) "Please describe your feedback" else null
+    fun validate(form: FeedbackForm): String? = when {
+        form.category == null -> "Please choose a category"
+        form.message.isBlank() -> "Please describe your feedback"
+        else -> null
+    }
 
     suspend fun submit(form: FeedbackForm, currentUserId: String): SubmitResult {
+        val category = requireNotNull(form.category) { "category must be selected before submit" }
         val now = clock.nowMillis()
         val communityId = if (form.communityVisible) "fb-$now" else null
         val feedbackId = feedbackDao.insert(
             FeedbackEntity(
-                category = form.category.name,
+                category = category.name,
                 sentiment = form.sentiment.name,
+                issueLabel = form.issueLabel,
                 message = form.message,
                 photoUri = form.photoUri,
                 anonymous = form.anonymous,
@@ -144,7 +150,7 @@ class FeedbackRepository(
                 CommunityFeedback(
                     id = communityId,
                     userId = if (form.anonymous) null else currentUserId,
-                    category = form.category,
+                    category = category,
                     sentiment = form.sentiment,
                     message = form.message,
                     building = form.building,
@@ -164,12 +170,12 @@ class FeedbackRepository(
             return SubmitResult(feedbackId, ticketCreated = false)
         }
         val routed = ticketRouter.routeTicket(
-            TicketDraft(feedbackId, form.category, form.message, form.location, form.photoUri)
+            TicketDraft(feedbackId, category, form.message, form.location, form.photoUri)
         )
         ticketDao.insert(
             TicketEntity(
                 feedbackId = feedbackId,
-                category = form.category.name,
+                category = category.name,
                 route = routed.route.name,
                 externalId = routed.externalId,
                 status = TicketStatus.OPEN.name,
