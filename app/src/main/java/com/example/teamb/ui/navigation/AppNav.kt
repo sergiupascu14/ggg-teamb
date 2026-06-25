@@ -49,7 +49,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppRoot(container: AppContainer) {
     val profile by container.profileStore.profile.collectAsState(initial = null)
-    var unlocked by remember { mutableStateOf(false) }
+    // Auto-login: if a session was remembered (set on unlock/onboarding), skip the lock screen.
+    var unlocked by remember { mutableStateOf(container.credentialStore.isLoggedIn()) }
     val scope = rememberCoroutineScope()
 
     // Fully sign out: drop the local identity + password so the app returns to onboarding,
@@ -67,7 +68,9 @@ fun AppRoot(container: AppContainer) {
         currentProfile == null || !currentProfile.isComplete ->
             OnboardingScreen(container, onCompleted = { unlocked = true })
 
-        container.credentialStore.hasPassword() && !unlocked ->
+        // Show the lock screen only when there's a password AND no remembered session — a remembered
+        // session (set on unlock/onboarding, cleared on sign out) makes the app log in automatically.
+        container.credentialStore.hasPassword() && !unlocked && !container.credentialStore.isLoggedIn() ->
             LoginScreen(container, onUnlocked = { unlocked = true })
 
         else -> MainScaffold(container, onSignOut = ::signOut)
@@ -140,12 +143,16 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
             composable(Routes.KITCHEN) {
                 KitchenDetailScreen(
                     container,
-                    onReport = { navController.navigate(Routes.feedback(it)) },
+                    onReport = { category, note, community ->
+                        navController.navigate(Routes.feedback(category, note, community))
+                    },
                 )
             }
             composable(Routes.REPORT) {
                 ReportCategoryScreen(
-                    onContinue = { navController.navigate(Routes.feedback(it)) },
+                    onContinue = { category, note, community ->
+                        navController.navigate(Routes.feedback(category, note, community))
+                    },
                 )
             }
             composable(
@@ -156,11 +163,24 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
                         nullable = true
                         defaultValue = null
                     },
+                    navArgument(Routes.FEEDBACK_ARG_NOTE) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument(Routes.FEEDBACK_ARG_COMMUNITY) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
                 ),
             ) { entry ->
                 FeedbackScreen(
                     container,
                     initialCategoryName = entry.arguments?.getString(Routes.FEEDBACK_ARG_CATEGORY),
+                    initialNote = entry.arguments?.getString(Routes.FEEDBACK_ARG_NOTE),
+                    initialCommunity = entry.arguments?.getString(Routes.FEEDBACK_ARG_COMMUNITY).toBoolean(),
+                    onSubmitted = { navController.popBackStack() },
                 )
             }
             composable(Routes.NEWSFEED) { NewsfeedScreen(container) }

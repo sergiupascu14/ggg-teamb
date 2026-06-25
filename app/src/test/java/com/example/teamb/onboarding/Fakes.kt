@@ -29,6 +29,7 @@ class FakeProfileStore : ProfileStore {
 class FakeCredentialStore : CredentialStore {
     var storedPassword: String? = null
         private set
+    private var loggedIn = false
 
     override fun hasPassword(): Boolean = storedPassword != null
 
@@ -38,8 +39,15 @@ class FakeCredentialStore : CredentialStore {
 
     override fun verify(password: String): Boolean = storedPassword == password
 
+    override fun isLoggedIn(): Boolean = loggedIn
+
+    override fun setLoggedIn(loggedIn: Boolean) {
+        this.loggedIn = loggedIn
+    }
+
     override fun clear() {
         storedPassword = null
+        loggedIn = false
     }
 }
 

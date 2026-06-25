@@ -140,6 +140,7 @@ class OnboardingViewModelTest {
         assertFalse(vm.state.value.completed)
         assertNull(profileStore.saved)
         assertFalse(credentialStore.hasPassword())
+        assertFalse(credentialStore.isLoggedIn())
     }
 
     @Test
@@ -168,6 +169,7 @@ class OnboardingViewModelTest {
         assertTrue(ok)
         assertTrue(vm.state.value.completed)
         assertTrue(credentialStore.verify("matching"))
+        assertTrue(credentialStore.isLoggedIn()) // first-time users are remembered for auto-login
 
         val saved = profileStore.saved
         assertNotNull(saved)

@@ -94,6 +94,8 @@ data class FeedbackForm(
     val issueLabel: String? = null,
     val message: String,
     val photoUri: String? = null,
+    // Base64-encoded, downscaled copy of [photoUri] for the shared community feed (set at submit).
+    val photoData: String? = null,
     val anonymous: Boolean = false,
     val location: String? = null,
     val building: String? = null,
@@ -157,7 +159,8 @@ class FeedbackRepository(
                     building = form.building,
                     floor = form.floor,
                     location = form.location,
-                    photoRef = form.photoUri,
+                    // Share the portable base64 copy (not the device-local content:// uri).
+                    photoRef = form.photoData,
                     createdAt = now,
                 )
             )

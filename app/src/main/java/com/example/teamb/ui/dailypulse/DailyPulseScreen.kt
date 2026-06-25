@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -23,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -55,6 +55,7 @@ import com.example.teamb.ui.components.GarminHeader
 import com.example.teamb.ui.components.InfoBanner
 import com.example.teamb.ui.components.PrimaryButton
 import com.example.teamb.ui.components.ScreenTitle
+import com.example.teamb.ui.components.ShimmerBox
 import com.example.teamb.ui.components.SurfaceCard
 import com.example.teamb.ui.theme.AccentBlue
 import com.example.teamb.ui.theme.BrandCyan
@@ -118,18 +119,14 @@ fun DailyPulseScreen(container: AppContainer) {
 
             Box(Modifier.padding(top = 16.dp)) {
                 when {
-                    state.loading -> SurfaceCard {
-                        Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = GarminBlue)
-                        }
-                    }
+                    state.loading -> PulseCardSkeleton()
                     state.checkedInToday -> CheckedInCard()
                     else -> PulseForm(submitting = state.submitting, onSubmit = vm::submit)
                 }
             }
 
             Box(Modifier.padding(top = 16.dp)) {
-                WeeklyPulseCard(weekly = state.weekly)
+                if (state.loading) WeeklyPulseSkeleton() else WeeklyPulseCard(weekly = state.weekly)
             }
 
             Box(Modifier.padding(top = 16.dp)) {
@@ -225,6 +222,53 @@ private fun CheckedInCard() {
                 color = TextSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+/** Shimmering placeholder for the daily check-in card while the screen loads. */
+@Composable
+private fun PulseCardSkeleton() {
+    SurfaceCard {
+        Column(Modifier.fillMaxWidth()) {
+            ShimmerBox(Modifier.width(200.dp).height(20.dp))
+            ShimmerBox(Modifier.padding(top = 8.dp).width(260.dp).height(14.dp))
+            Row(
+                modifier = Modifier.padding(top = 16.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                repeat(5) { ShimmerBox(Modifier.size(48.dp), shape = CircleShape) }
+            }
+            ShimmerBox(
+                Modifier.padding(top = 16.dp).fillMaxWidth().height(88.dp),
+                shape = RoundedCornerShape(16.dp),
+            )
+            ShimmerBox(
+                Modifier.padding(top = 16.dp).fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+            )
+        }
+    }
+}
+
+/** Shimmering placeholder for the "This week" card while the weekly pulse loads. */
+@Composable
+private fun WeeklyPulseSkeleton() {
+    SurfaceCard {
+        Column(Modifier.fillMaxWidth()) {
+            ShimmerBox(Modifier.width(120.dp).height(20.dp))
+            Row(
+                modifier = Modifier.padding(top = 12.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                repeat(3) {
+                    ShimmerBox(Modifier.weight(1f).height(56.dp), shape = RoundedCornerShape(16.dp))
+                }
+            }
+            ShimmerBox(
+                Modifier.padding(top = 16.dp).fillMaxWidth().height(140.dp),
+                shape = RoundedCornerShape(16.dp),
             )
         }
     }

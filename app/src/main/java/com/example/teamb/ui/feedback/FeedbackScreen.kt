@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -84,12 +85,18 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun FeedbackScreen(container: AppContainer, initialCategoryName: String? = null) {
+fun FeedbackScreen(
+    container: AppContainer,
+    initialCategoryName: String? = null,
+    initialNote: String? = null,
+    initialCommunity: Boolean = false,
+    onSubmitted: () -> Unit = {},
+) {
     val vm: FeedbackViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                FeedbackViewModel(container.feedbackRepository, container.photoDetector) as T
+                FeedbackViewModel(container.feedbackRepository, container.photoDetector, container.photoEncoder) as T
         },
     )
     val state by vm.state.collectAsState()
@@ -111,6 +118,13 @@ fun FeedbackScreen(container: AppContainer, initialCategoryName: String? = null)
             ?: return@LaunchedEffect
         vm.setCategory(category)
         vm.setSentiment(FeedbackSentiment.ISSUE)
+    }
+
+    // Prefill a starter message and/or default "Share with the community" on, for shortcuts that
+    // open the form pre-populated (fridge report, kitchen quick actions, report quick chips).
+    LaunchedEffect(initialNote, initialCommunity) {
+        if (!initialNote.isNullOrBlank()) vm.setMessage(initialNote)
+        if (initialCommunity) vm.setCommunityVisible(true)
     }
 
     val photoLauncher = rememberLauncherForActivityResult(
@@ -144,7 +158,8 @@ fun FeedbackScreen(container: AppContainer, initialCategoryName: String? = null)
         },
     )
 
-    // Surface the one-shot submit result as a snackbar, then clear it.
+    // On a successful submit, return to the previous screen INSTANTLY. The confirmation is shown as
+    // a Toast (not a snackbar) so it stays visible over the destination after we navigate away.
     LaunchedEffect(state.result) {
         val result = state.result ?: return@LaunchedEffect
         val message = when {
@@ -152,7 +167,8 @@ fun FeedbackScreen(container: AppContainer, initialCategoryName: String? = null)
             result.ticketCreated -> "Ticket ${result.ticketExternalId} created"
             else -> "Feedback submitted"
         }
-        scope.launch { snackbarHostState.showSnackbar(message) }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        onSubmitted()
         vm.consumeResult()
     }
 

@@ -101,6 +101,21 @@ class PhotoIssueCategoryMapper(
     }
 }
 
+/**
+ * Encodes a picked photo (a `content://`/`file://` uri) into a compact, portable form so it can be
+ * shared on the community newsfeed. Returns a base64 JPEG string (no `data:` prefix) downscaled for
+ * the feed, or null when no photo / encoding fails. The Android impl lives in [AndroidPhotoEncoder];
+ * [NoopPhotoEncoder] is the test/in-memory stand-in.
+ */
+interface PhotoEncoder {
+    suspend fun encode(photoUri: String): String?
+}
+
+/** Encodes nothing — used in unit tests and demos without a real device [android.content.Context]. */
+class NoopPhotoEncoder : PhotoEncoder {
+    override suspend fun encode(photoUri: String): String? = null
+}
+
 /** Detects issues from a feedback photo. Phase-3 capability; always optional and non-blocking. */
 interface PhotoIssueDetector {
     /** Returns a reviewable issue draft or a failure state; callers must not block submission on it. */

@@ -49,11 +49,16 @@ private fun FeedbackCategory.glyph(): String = when (this) {
     FeedbackCategory.OTHER -> "💬"
 }
 
-/** Quick-pick chips that jump straight into the form with a category preselected. */
+/**
+ * Quick-pick chips that jump straight into the form with a category preselected and a starter
+ * message prefilled, so the user only needs to adjust the details.
+ */
+private data class QuickChipSpec(val label: String, val category: FeedbackCategory, val note: String)
+
 private val QUICK_CHIPS = listOf(
-    "Too noisy" to FeedbackCategory.OTHER,
-    "Too hot" to FeedbackCategory.TEMPERATURE,
-    "No rooms" to FeedbackCategory.MEETING_ROOMS,
+    QuickChipSpec("Too noisy", FeedbackCategory.OTHER, "It's too noisy to focus in my area."),
+    QuickChipSpec("Too hot", FeedbackCategory.TEMPERATURE, "It's too hot in my area — could the temperature be adjusted?"),
+    QuickChipSpec("No rooms", FeedbackCategory.MEETING_ROOMS, "There are no meeting rooms available when I need one."),
 )
 
 /**
@@ -61,7 +66,7 @@ private val QUICK_CHIPS = listOf(
  * detailed [com.example.teamb.ui.feedback.FeedbackScreen] with the category preselected.
  */
 @Composable
-fun ReportCategoryScreen(onContinue: (categoryName: String) -> Unit) {
+fun ReportCategoryScreen(onContinue: (categoryName: String, note: String?, community: Boolean) -> Unit) {
     var selected by remember { mutableStateOf<FeedbackCategory?>(null) }
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -101,15 +106,16 @@ fun ReportCategoryScreen(onContinue: (categoryName: String) -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                QUICK_CHIPS.forEach { (label, category) ->
-                    QuickChip(label = label, onClick = { onContinue(category.name) })
+                QUICK_CHIPS.forEach { chip ->
+                    // Quick chips post straight to the community.
+                    QuickChip(label = chip.label, onClick = { onContinue(chip.category.name, chip.note, true) })
                 }
             }
 
             Box(Modifier.padding(top = 24.dp)) {
                 PrimaryButton(
                     text = "Continue",
-                    onClick = { selected?.let { onContinue(it.name) } },
+                    onClick = { selected?.let { onContinue(it.name, null, false) } },
                     enabled = selected != null,
                 )
             }

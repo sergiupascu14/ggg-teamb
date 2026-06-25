@@ -2,6 +2,7 @@ package com.example.teamb.feedback
 
 import com.example.teamb.data.community.InMemoryCommunityRepository
 import com.example.teamb.data.integration.MockJiraTicketRouter
+import com.example.teamb.data.integration.PhotoEncoder
 import com.example.teamb.data.integration.PhotoIssueDetector
 import com.example.teamb.data.model.PhotoAnalysisFailure
 import com.example.teamb.data.model.PhotoCategorizationResult
@@ -50,6 +51,16 @@ class FeedbackViewModelTest {
     private class FixedDetector(private val result: PhotoCategorizationResult) : PhotoIssueDetector {
         override suspend fun analyze(photoUri: String): PhotoCategorizationResult = result
     }
+
+    private class FakeEncoder(private val encoded: String?) : PhotoEncoder {
+        var calls = 0
+        var lastUri: String? = null
+        override suspend fun encode(photoUri: String): String? {
+            calls++; lastUri = photoUri; return encoded
+        }
+    }
+
+    private val disabled = PhotoCategorizationResult(failure = PhotoAnalysisFailure.DISABLED)
 
     @Test
     fun `field setters update the form`() {
@@ -243,6 +254,44 @@ class FeedbackViewModelTest {
         assertEquals("Leaking sink", saved.issueLabel)
         assertEquals(FeedbackCategory.OTHER.name, saved.category)
         assertEquals("Water is pooling under the sink.", saved.message)
+    }
+
+    @Test
+    fun `community submit with photo encodes and publishes base64`() = runTest {
+        val community = InMemoryCommunityRepository()
+        val encoder = FakeEncoder("ENCODED_BASE64")
+        val vm = FeedbackViewModel(repoFixture(community).repository, FixedDetector(disabled), encoder)
+        vm.onPhotoPicked("content://photo.jpg")
+        advanceUntilIdle()
+        vm.setSentiment(FeedbackSentiment.ISSUE)
+        vm.setCategory(FeedbackCategory.KITCHEN)
+        vm.setMessage("Fridge is full")
+        vm.setCommunityVisible(true)
+        vm.submit("42")
+        advanceUntilIdle()
+
+        assertEquals(1, encoder.calls)
+        assertEquals("content://photo.jpg", encoder.lastUri)
+        val published = community.snapshot().single()
+        assertEquals("ENCODED_BASE64", published.photoRef)
+    }
+
+    @Test
+    fun `non-community submit never encodes the photo`() = runTest {
+        val community = InMemoryCommunityRepository()
+        val encoder = FakeEncoder("X")
+        val vm = FeedbackViewModel(repoFixture(community).repository, FixedDetector(disabled), encoder)
+        vm.onPhotoPicked("content://photo.jpg")
+        advanceUntilIdle()
+        vm.setSentiment(FeedbackSentiment.ISSUE)
+        vm.setCategory(FeedbackCategory.KITCHEN)
+        vm.setMessage("Just for my record")
+        // communityVisible stays false
+        vm.submit("42")
+        advanceUntilIdle()
+
+        assertEquals(0, encoder.calls)
+        assertTrue(community.snapshot().isEmpty())
     }
 
     @Test

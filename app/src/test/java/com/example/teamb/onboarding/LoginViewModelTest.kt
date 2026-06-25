@@ -22,21 +22,25 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `correct password unlocks`() {
-        val vm = LoginViewModel(store("secret"))
+    fun `correct password unlocks and remembers the session`() {
+        val credentials = store("secret")
+        val vm = LoginViewModel(credentials)
         vm.onPasswordChange("secret")
         vm.submit()
         assertTrue(vm.state.value.unlocked)
         assertNull(vm.state.value.error)
+        assertTrue(credentials.isLoggedIn()) // auto-login flag persisted
     }
 
     @Test
-    fun `wrong password shows error and stays locked`() {
-        val vm = LoginViewModel(store("secret"))
+    fun `wrong password shows error, stays locked, and does not remember the session`() {
+        val credentials = store("secret")
+        val vm = LoginViewModel(credentials)
         vm.onPasswordChange("nope")
         vm.submit()
         assertFalse(vm.state.value.unlocked)
         assertEquals("Incorrect password.", vm.state.value.error)
+        assertFalse(credentials.isLoggedIn())
     }
 
     @Test

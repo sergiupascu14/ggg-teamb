@@ -2,6 +2,8 @@ package com.example.teamb.ui.feedback
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.teamb.data.integration.NoopPhotoEncoder
+import com.example.teamb.data.integration.PhotoEncoder
 import com.example.teamb.data.integration.PhotoIssueDetector
 import com.example.teamb.data.model.PhotoAnalysisFailure
 import com.example.teamb.data.model.PhotoCategorizationResult
@@ -45,6 +47,7 @@ data class FeedbackUiState(
 class FeedbackViewModel(
     private val repository: FeedbackRepository,
     private val photoDetector: PhotoIssueDetector,
+    private val photoEncoder: PhotoEncoder = NoopPhotoEncoder(),
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(FeedbackUiState())
@@ -144,7 +147,13 @@ class FeedbackViewModel(
         }
         _state.update { it.copy(submitting = true, error = null) }
         viewModelScope.launch {
-            val result = repository.submit(form, currentUserId)
+            // Encode the photo for the community feed only when it will actually be shared.
+            val toSubmit = if (form.communityVisible && form.photoUri != null) {
+                form.copy(photoData = photoEncoder.encode(form.photoUri))
+            } else {
+                form
+            }
+            val result = repository.submit(toSubmit, currentUserId)
             _state.value = FeedbackUiState(
                 form = FeedbackForm(
                     sentiment = FeedbackSentiment.POSITIVE,

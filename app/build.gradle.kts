@@ -117,6 +117,7 @@ private val coverageExclusions = listOf(
     "**/data/desk/DeskAllocationRepository\$Companion*.*",
     "**/data/integration/MockGarminAdDirectoryService*.*",
     "**/data/integration/MlKitPhotoIssueDetector*.*",
+    "**/data/integration/AndroidPhotoEncoder*.*",
     "**/notification/**",
     "**/data/util/SystemClock*.*"
 )

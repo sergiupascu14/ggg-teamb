@@ -37,6 +37,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.teamb.AppContainer
 import com.example.teamb.data.db.FreezerItemEntity
+import com.example.teamb.data.model.Building
 import com.example.teamb.data.model.FeedbackCategory
 import com.example.teamb.data.model.FridgeOccupancy
 import com.example.teamb.data.sync.Fridges
@@ -62,17 +63,36 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-/** Quick-report shortcuts shown on the Kitchen detail (Screen 4), all routed as Kitchen issues. */
-private val KITCHEN_QUICK_ACTIONS = listOf(
-    "Expired food", "Fridge full", "Dirty shelves", "Unknown items",
+/**
+ * Quick-report shortcuts shown on the Kitchen detail (Screen 4), all routed as Kitchen issues.
+ * Each carries a starter message that prefills the feedback form so the user only has to tweak it.
+ */
+private val KITCHEN_QUICK_ACTIONS: List<Pair<String, String>> = listOf(
+    "Expired food" to "There's expired food in the kitchen fridge that needs to be thrown out.",
+    "Fridge full" to "The kitchen fridge is completely full — there's no space left to store food.",
+    "Dirty shelves" to "The kitchen shelves are dirty and need a clean.",
+    "Unknown items" to "There are unlabelled / unknown items left in the kitchen fridge.",
 )
+
+/** Builds the prefilled message for the fridge "Report" shortcut from the live occupancy. */
+private fun fridgeReportNote(building: String?, floor: Int?, avgOccupancy: Int): String {
+    val label = building?.let { Building.fromCode(it)?.label ?: it }
+    return if (label != null && floor != null && floor > 0) {
+        "The fridges on floor $floor of the $label building are currently about $avgOccupancy% full."
+    } else {
+        "The shared kitchen fridges are currently about $avgOccupancy% full."
+    }
+}
 
 /**
  * Kitchen detail (Screen 4): food-storage and cleanliness insights, with the office freezer
  * check-in/out living here. Fridge occupancy is derived from the number of items checked in.
  */
 @Composable
-fun KitchenDetailScreen(container: AppContainer, onReport: (categoryName: String) -> Unit) {
+fun KitchenDetailScreen(
+    container: AppContainer,
+    onReport: (categoryName: String, note: String?, community: Boolean) -> Unit,
+) {
     val vm: FreezerViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -95,6 +115,11 @@ fun KitchenDetailScreen(container: AppContainer, onReport: (categoryName: String
         if (floorKey != null) container.fridgeRepository.observeFloor(floorKey) else emptyFlow()
     }.collectAsState(initial = emptyList())
 
+    // Live average fullness across this floor's fridges — drives the report prefill + Kitchen Pulse.
+    val displayFridges = if (fridges.isEmpty()) Fridges.normalize(emptyList()) else fridges
+    val avgOccupancy =
+        if (displayFridges.isEmpty()) 0 else displayFridges.sumOf { it.occupancy } / displayFridges.size
+
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         GarminHeader()
         Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 20.dp)) {
@@ -114,12 +139,18 @@ fun KitchenDetailScreen(container: AppContainer, onReport: (categoryName: String
                             }
                         }
                     },
-                    onReport = { onReport(FeedbackCategory.KITCHEN.name) },
+                    onReport = {
+                        onReport(
+                            FeedbackCategory.KITCHEN.name,
+                            fridgeReportNote(profile?.building, profile?.floor, avgOccupancy),
+                            true,
+                        )
+                    },
                 )
             }
 
             FieldLabel("Quick actions", modifier = Modifier.padding(top = 24.dp, bottom = 10.dp))
-            QuickActions(onAction = { onReport(FeedbackCategory.KITCHEN.name) })
+            QuickActions(onAction = { note -> onReport(FeedbackCategory.KITCHEN.name, note, true) })
 
             Box(Modifier.padding(top = 24.dp)) {
                 if (ownerId == null) {
@@ -139,7 +170,9 @@ fun KitchenDetailScreen(container: AppContainer, onReport: (categoryName: String
                 }
             }
 
-            Box(Modifier.padding(top = 24.dp)) { KitchenPulseCard(itemCount = frozenItems.size) }
+            Box(Modifier.padding(top = 24.dp)) {
+                KitchenPulseCard(itemCount = frozenItems.size, avgOccupancy = avgOccupancy)
+            }
             Box(Modifier.padding(top = 16.dp)) { YouSaidWeDidCard() }
         }
     }
@@ -257,15 +290,19 @@ private fun AdjustButton(label: String, modifier: Modifier = Modifier, onClick: 
 }
 
 @Composable
-private fun QuickActions(onAction: () -> Unit) {
+private fun QuickActions(onAction: (note: String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         KITCHEN_QUICK_ACTIONS.chunked(2).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                rowItems.forEach { label ->
-                    OutlinedPillButton(text = label, onClick = onAction, modifier = Modifier.weight(1f))
+                rowItems.forEach { (label, note) ->
+                    OutlinedPillButton(
+                        text = label,
+                        onClick = { onAction(note) },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
                 if (rowItems.size == 1) Box(Modifier.weight(1f))
             }
@@ -328,15 +365,27 @@ private fun FreezerRow(item: FreezerItemEntity, onCheckOut: () -> Unit) {
 }
 
 @Composable
-private fun KitchenPulseCard(itemCount: Int) {
+private fun KitchenPulseCard(itemCount: Int, avgOccupancy: Int) {
+    // Top issue reflects the live shared-fridge fullness rather than a fixed value.
+    val topIssue = when {
+        avgOccupancy >= 80 -> "Top issue: Fridge full"
+        avgOccupancy >= 50 -> "Top issue: Limited fridge space"
+        else -> "No major issues right now 🎉"
+    }
     SurfaceCard {
         Column {
             Text("Kitchen Pulse", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
             Text(
-                "$itemCount items stored · Top issue: Fridge full",
+                "$itemCount items stored · Fridges $avgOccupancy% full",
                 style = MaterialTheme.typography.labelLarge,
                 color = TextMuted,
                 modifier = Modifier.padding(top = 4.dp),
+            )
+            Text(
+                topIssue,
+                style = MaterialTheme.typography.labelLarge,
+                color = TextMuted,
+                modifier = Modifier.padding(top = 2.dp),
             )
         }
     }

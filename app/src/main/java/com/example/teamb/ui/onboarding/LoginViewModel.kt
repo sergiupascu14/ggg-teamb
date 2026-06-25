@@ -30,6 +30,7 @@ class LoginViewModel(private val credentialStore: CredentialStore) {
             return
         }
         if (credentialStore.verify(pw)) {
+            credentialStore.setLoggedIn(true) // remember the session so we auto-unlock next launch
             _state.update { it.copy(error = null, unlocked = true) }
         } else {
             _state.update { it.copy(error = "Incorrect password.") }

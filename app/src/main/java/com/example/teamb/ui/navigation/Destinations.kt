@@ -1,5 +1,6 @@
 package com.example.teamb.ui.navigation
 
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Apartment
@@ -20,11 +21,31 @@ object Routes {
     const val TICKETS = "tickets"
     const val LEADERBOARD = "leaderboard"
 
-    /** Feedback form deep link carrying an optional preselected category name. */
+    /**
+     * Feedback form deep link carrying an optional preselected category, a prefilled message
+     * ([FEEDBACK_ARG_NOTE]) and whether to default "Share with the community" on
+     * ([FEEDBACK_ARG_COMMUNITY]). All are optional query params.
+     */
     const val FEEDBACK_ARG_CATEGORY = "category"
-    const val FEEDBACK_WITH_ARG = "$FEEDBACK?$FEEDBACK_ARG_CATEGORY={$FEEDBACK_ARG_CATEGORY}"
-    fun feedback(categoryName: String? = null): String =
-        if (categoryName == null) FEEDBACK else "$FEEDBACK?$FEEDBACK_ARG_CATEGORY=$categoryName"
+    const val FEEDBACK_ARG_NOTE = "note"
+    const val FEEDBACK_ARG_COMMUNITY = "community"
+    const val FEEDBACK_WITH_ARG =
+        "$FEEDBACK?$FEEDBACK_ARG_CATEGORY={$FEEDBACK_ARG_CATEGORY}" +
+            "&$FEEDBACK_ARG_NOTE={$FEEDBACK_ARG_NOTE}" +
+            "&$FEEDBACK_ARG_COMMUNITY={$FEEDBACK_ARG_COMMUNITY}"
+
+    fun feedback(
+        categoryName: String? = null,
+        note: String? = null,
+        community: Boolean = false,
+    ): String {
+        val params = buildList {
+            categoryName?.let { add("$FEEDBACK_ARG_CATEGORY=${Uri.encode(it)}") }
+            note?.let { add("$FEEDBACK_ARG_NOTE=${Uri.encode(it)}") }
+            if (community) add("$FEEDBACK_ARG_COMMUNITY=true")
+        }
+        return if (params.isEmpty()) FEEDBACK else "$FEEDBACK?${params.joinToString("&")}"
+    }
 }
 
 /** Bottom navigation tabs. Community sits in the middle as the primary shared surface. */

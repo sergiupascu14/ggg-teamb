@@ -19,8 +19,11 @@ import kotlinx.coroutines.tasks.await
  * uses [InMemoryCommunityRepository]. The schema stores ONLY userId + content, never PII.
  *
  * Layout:
- *   feedback/{id} -> { userId, category, sentiment, message, building, floor, location, photoRef, createdAt }
+ *   feedback/{id} -> { userId, category, sentiment, message, building, floor, location, photo, createdAt }
  *   votes/{id}/{voterId} -> true
+ *
+ * `photo` (optional) holds a base64-encoded, downscaled JPEG so the feed can show the image on any
+ * device — never a device-local uri. It carries no PII, so it is allowed by the database rules.
  */
 class FirebaseCommunityRepository(
     private val root: DatabaseReference,
@@ -61,7 +64,7 @@ class FirebaseCommunityRepository(
             "building" to feedback.building,
             "floor" to feedback.floor,
             "location" to feedback.location,
-            "photoRef" to feedback.photoRef,
+            "photo" to feedback.photoRef,
             "createdAt" to feedback.createdAt,
         )
         feedbackRef.child(feedback.id).setValue(payload).await()
@@ -90,7 +93,7 @@ class FirebaseCommunityRepository(
             building = child("building").getValue(String::class.java),
             floor = child("floor").getValue(Int::class.java),
             location = child("location").getValue(String::class.java),
-            photoRef = child("photoRef").getValue(String::class.java),
+            photoRef = child("photo").getValue(String::class.java),
             createdAt = child("createdAt").getValue(Long::class.java) ?: 0L,
         )
     }

@@ -1,44 +1,61 @@
-# Agent Context — TeamB Office (Garmin) App
+# Agent Context — CLOOJ Office (Garmin) App
 
-Compact handoff. Android Jetpack Compose office-feedback app for a Garmin office.
+Compact handoff. Android Jetpack Compose office-feedback app for the Garmin **Cluj ("CLOOJ")**
+office. Brand: Garmin. Package `com.example.teamb`.
 
 ## Stack / build
-- Kotlin, Compose, Material3, `com.example.teamb`. minSdk 24, targetSdk 35, JVM 17. Gradle 8.11.1, AGP 8.7.3, Kotlin 2.0.21.
-- **MUST build with JDK 21** (system Java 25 is too new): `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`.
-- Build: `./gradlew :app:assembleDebug`. Tests + 90% gate: `./gradlew :app:jacocoCoverageVerification` (wired into `check`). Emulator: `emulator-5554`.
+- Kotlin, Compose, Material3. minSdk 24, targetSdk 35, JVM 17. Gradle 8.11.1, AGP 8.7.3, Kotlin 2.0.21.
+- **MUST build with JDK 21** (system Java is too new): `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`.
+- Build: `./gradlew :app:assembleDebug`. Tests + 90% gate: `./gradlew :app:jacocoCoverageVerification` (wired into `check`).
+- **Run these two in SEPARATE Gradle invocations** — running `assembleDebug` + `jacoco*` together trips a Gradle task-ordering validation (a committed APK now lives under `app/build/`). Emulator: `emulator-5554`.
 - ADB text input is hijacked by a stylus-handwriting promo; disable: `adb shell settings put secure stylus_handwriting_enabled 0`.
-- Never commit `gradle.properties` `org.gradle.java.home` (machine-specific) or `google-services.json`. `.gitignore` excludes `build/`, `app/build/`, `node_modules/`.
+- Firebase is **LIVE**: `google-services.json` IS committed (project `clooj-ggg`, RTDB `europe-west1`). Don't commit `gradle.properties` `org.gradle.java.home`. `.gitignore` excludes `build/`, `node_modules/` (but an `app/build/...apk` got tracked historically).
+- Shareable debug APK lives at `~/Desktop/clooj-teamb-debug.apk` (~64 MB, self-signed; release would need a signing keystore).
 
 ## Architecture
-- MVVM + repositories + integration interfaces (mocks). Manual DI: `AppContainer` (held by `TeamBApp` Application; reach via `(application as TeamBApp).container`).
-- Persistence: Room (`AppDatabase` v2; entities `DailyPulseEntity`, `FreezerItemEntity`, `FeedbackEntity`, `TicketEntity`) + DataStore (`ProfileStore` → `UserProfile`) + `EncryptedCredentialStore` (salted password hash; `PasswordHasher` is pure/testable).
-- Repos: `DailyPulseRepository`, `FreezerRepository`, `FeedbackRepository` (+ `FeedbackForm`/`SubmitResult`), `TicketRepository`, `GamificationRepository`. Util: `Clock`/`Dates`/`StreakCalculator` (`data/util`).
-- Keep logic in repositories/ViewModels (unit-testable); JaCoCo gate excludes pure UI screens, DI, and Android-bound integration (DataStore/Encrypted/Firebase/notifications/ML Kit).
+- MVVM + repositories + integration interfaces (mocks). Manual DI: `AppContainer` (held by `TeamBApp`; reach via `(application as TeamBApp).container`).
+- Persistence: Room (`AppDatabase` **v3**, `fallbackToDestructiveMigration`) + DataStore (`ProfileStore`→`UserProfile`, `SettingsStore`→`ThemeMode`) + `EncryptedCredentialStore` (salted hash; `PasswordHasher` pure/testable).
+- Local repos: `DailyPulseRepository`, `FreezerRepository`, `FeedbackRepository` (+`FeedbackForm`/`SubmitResult`), `TicketRepository`, `GamificationRepository`. Util `Clock`/`Dates`/`StreakCalculator` (`data/util`).
+- **Firebase-synced repos** (`data/sync/`, interface + `InMemory*` + `Firebase*`): `CommunityRepository` (newsfeed+votes, actually `data/community/`), `FridgeRepository`, `PulseRepository`. Pure logic: `PulseAggregator`, `Fridges` helper.
+- Keep logic in repos/ViewModels/use-cases (unit-testable). JaCoCo excludes pure `*Screen*`, `ui/theme`, `ui/components`, `ui/navigation`, DI, and Android/Firebase-bound impls (`Firebase*Repository`, DataStore stores, ML Kit, notifications). **ViewModels are NOT excluded → they need tests.** Add the new `Firebase*`/`DataStoreSettingsStore` to `coverageExclusions` in `app/build.gradle.kts` when adding more.
 
 ## Privacy model (non-negotiable)
-- Identities never leave device. Community/newsfeed records link **only by `userId` (= Staff ID)**; anonymous = `null` userId; display names resolved **locally** from the desk dataset via `desk.displayName(id)?.toDisplayName()`.
+- Identities never leave device. Firebase records link **only by `userId` (= Staff ID)** plus content (mood, category, sentiment, **building/floor**, votes, occupancy) — never names/supervisors/emails. Anonymous = `null` userId. Display names resolved **locally** via `desk.displayName(id)?.toDisplayName()`. `database.rules.json` validates the no-PII shape for `feedback`/`votes`/`pulse`/`fridges`.
 
 ## Desk allocation dataset
-- Bundled asset `app/src/main/assets/desk_allocation.json` (648 employees, 754 desks), generated from `docs/desk-allocation/Desk_Allocation_Anonymized.xlsx` (safe/anonymized). Never commit real `Desk_Allocation.xlsx`.
-- `DeskAllocationRepository`: `employees`, `desks`, `searchEmployees(q)`, `employeeById`, `deskForStaff`, `displayName`, `buildings()`, `floorsFor(code)`, `parseDeskId`.
-- Desk ID grammar: `{T|R}{floor}-{Zone}{Row}-{DeskNum}` e.g. `T6-C2-01`, `R4-F6-04`. **Zones A–H, rows 1–7, 1–2 digit deskNum** (the AI_AGENT_GUIDE says A–D/1–3 but the real data is wider — `DeskId.parse` matches the data). Tower floors 3–6, Riviera 3–5.
+- Bundled asset `app/src/main/assets/desk_allocation.json` (648 employees, 754 desks), from `docs/desk-allocation/Desk_Allocation_Anonymized.xlsx`. Never commit real `Desk_Allocation.xlsx`.
+- `DeskAllocationRepository`: `employees`, `desks` (each has `building`/`floor`/`staffId`), `searchEmployees`, `employeeById`, `deskForStaff`, `displayName`, `buildings()`, `floorsFor`, `parseDeskId`.
+- Desk ID: `{T|R}{floor}-{Zone}{Row}-{DeskNum}` e.g. `T6-C2-01`, `R4-F6-04`. Zones A–H, rows 1–7, 1–2 digit deskNum. Tower floors 3–6, Riviera 3–5.
 
-## Design system (Garmin) — `ui/theme` + `ui/components`
-- Tokens: `GarminBlue #005BAC`, `Canvas #F6F8FC`, `AccentBlue #EAF4FF`, `CardSurface #FFF`, `CardBorder #E7EDF6`, `InputFill #F9FBFE`, `InputBorder #DDE6F2`, `TextPrimary #172033`, `TextSecondary`, `TextMuted #7A869A`, `PositiveBg/Text #E8F7EF/#1E8E5A`, `IssueBg/Text #FFF2E6/#C56A00`. Light theme only (no dark/dynamic).
-- Components: `GarminHeader`, `GarminLogo(onDark)`, `ScreenTitle(title, streak?)`, `SurfaceCard(padding=20){}`, `PrimaryButton`, `OutlinedPillButton(leadingIcon?)`, `AppTextField`, `InfoBanner`, `Tag(text,bg,fg)`, `FieldLabel`. Name helper: `ui.util.toDisplayName()` (ALL-CAPS → Title Case).
-- **Screen pattern** (main tabs): `Column(fillMaxSize().verticalScroll){ GarminHeader(); Column(padding(horizontal=20.dp).padding(top=16,bottom=20)){ ScreenTitle(...); cards } }`. Bottom nav + Canvas bg + insets come from `MainScaffold` (`ui/navigation/AppNav.kt`) — do NOT add Scaffold/bottom-nav/status-bar padding in tab screens.
-- Onboarding/Login are standalone (outside MainScaffold): add `.background(Canvas).statusBarsPadding().imePadding()`.
-- Reference screen: `ui/dailypulse/DailyPulseScreen.kt`. Design source of truth: `daily-pulse-variants.svg`, `garmin-office-collage.svg`, and `docs/ui-design-audit.md` (all audit items resolved).
+## Design system + dark mode — `ui/theme`, `ui/components`
+- **Brand color is `BrandSky #6DCFF6`** (logo accent, hero gradients, identity). Solid fills use `Navy #1E3A8A` with `OnBrand #FFFFFF` text. Also `BrandCyan #19A9E5`, `GarminBlueMid #005BAC`. `BrandGradient` = navy→blue→sky.
+- **Dark mode is real**: `Color.kt` defines `AppColors` (data class) with `LightAppColors`/`DarkAppColors` and `LocalAppColors`. Semantic tokens (`Canvas`, `CardSurface`, `CardBorder`, `InputFill`, `InputBorder`, `AccentBlue`, `TextPrimary/Secondary/Muted/Disabled`, `Positive/Issue/Warning*`, and **`GarminBlue`** = foreground accent) are **`@Composable` getter `val`s** that read `LocalAppColors`.
+  - GOTCHA: those tokens can only be used in `@Composable` scope. For solid fills carrying white text use the constant `Navy`/`OnBrand`, NOT `GarminBlue`/`CardSurface`.
+- Theme: `TeamBTheme(darkTheme)` provides `LocalAppColors` + builds the M3 scheme. `MainActivity` resolves `darkTheme` from `SettingsStore.themeMode` (`ThemeMode.SYSTEM/LIGHT/DARK`, `isDark(systemDark)`); toggle lives in Profile ("Appearance").
+- Components: `GarminHeader`, `GarminLogo(onDark)`, `ScreenTitle(title, streak?, subtitle?)`, `SurfaceCard(modifier?, padding=20){}`, `PrimaryButton`, `OutlinedPillButton(leadingIcon?)`, `AppTextField`, `InfoBanner`, `Tag`, `FieldLabel`, `BrandGradient`. Name helper `ui.util.toDisplayName()`.
+- **Screen pattern** (tabs): `Column(fillMaxSize().verticalScroll){ GarminHeader(); Column(padding(horizontal=20).padding(top=16,bottom=20)){ ScreenTitle(...); cards } }`. Bottom nav + Canvas bg + insets come from `MainScaffold` — do NOT add Scaffold/nav/status-bar padding in tab screens. Onboarding/Login are standalone (`.background(Canvas).statusBarsPadding().imePadding()`).
+- 12-screen design source: `~/Downloads/clooj-garmin-building-icon-12-screens.svg` (visually faithful, not pixel-identical).
+
+## Navigation (`ui/navigation/AppNav.kt`, `Destinations.kt`)
+- Tabs (order): **Pulse · Spaces · Community (middle) · Report · Profile**. Routes: `pulse`, `spaces`, `kitchen`, `report`, `feedback?category={category}`, `newsfeed`, `profile`, `tickets`, `leaderboard`.
+- **Landing**: `MainScaffold` starts on **Community** if the current user already checked in today, else **Pulse** (per-user `checkedInToday`).
+- `AppRoot` routes onboarding → login → main. **Sign out fully clears** profile + credential (→ onboarding), not just re-lock.
 
 ## Features / screens
-Onboarding (searchable employee picker → desk-derived location → password; "Step X of 3"), Login (password unlock + sign out), Daily Pulse (mood + note + streak + notification perm), Freezer (check-in/out, human dates, cleanup reminders), Share Feedback (Positive default; AI photo categorization), My Tickets, Community newsfeed (vote + building/floor filters), Profile (gradient header, workplace info, streak, rewards, My Tickets/Leaderboard), Leaderboard (Office Champion 👑, pinned current-user row).
-- **Ticketing**: positive feedback never creates a ticket; `EmailTicketRouter` (mailto) / `MockJiraTicketRouter` (`JIRA-####`).
-- **AI photo**: `PhotoIssueDetector.analyze(uri): PhotoCategorizationResult(detectedIssue, description, suggestedCategory, confidence, failure)`. Impls: `MlKitPhotoIssueDetector` (on-device) + `MockPhotoIssueDetector` + `PhotoIssueCategoryMapper`. `FeedbackForm.category` is nullable; `issueLabel` auto-filled from the draft; submit blocks while `PhotoDraftStatus.ANALYZING`. Camera capture uses FileProvider (`file_paths.xml`).
+- **Daily Pulse** — per-user mood check-in (once/day). `DailyPulseViewModel(repository, pulseSync, clock)` + `configure(userId, building, floor)`; `submit` no-ops if already checked in or no user. Shows a **rolling last-7-days line graph** (You=orange / Floor=cyan / Company=sky) + company & floor averages, drawn on a Compose `Canvas`. `Dates.lastSevenDays` window; `Dates.weekdayInitial` labels. No "View trends" button.
+- **Spaces** — `SpacesScreen` (Kitchen / Meeting Rooms / Quiet Zones). `KitchenDetailScreen`: **2 shared fridges per floor** with live synced occupancy + ±10% controls (`FridgeRepository`, keyed by `Fridges.floorKey(building,floor)` e.g. "R4"), plus the personal **office freezer** check-in/out (`FreezerViewModel`, local), Kitchen Pulse, "You said → we did".
+- **Report** — `ReportCategoryScreen` (category grid + quick chips) → `FeedbackScreen(initialCategoryName)`. Positive (default) vs Issue; AI photo categorization; toggles (anonymous/community/ticket); location prefilled from profile.
+- **Community** — newsfeed (vote + building/floor filters), "What's happening around CLOOJ."
+- **Profile** — gradient hero (sky subtitle "{Building} · Cluj"), workplace info, streak, rewards (with info tooltip + progress), Appearance toggle, My Tickets / Leaderboard, Sign out.
+- **My Tickets** + **Leaderboard** (Office Champion 👑, pinned current-user row).
+- Ticketing: positive feedback never tickets; `MockJiraTicketRouter` (`JIRA-####`). AI photo: `PhotoIssueDetector.analyze` (ML Kit on-device + mock), camera via FileProvider.
 
-## Integrations (mocked; swap later)
-- `DirectoryService` (GarminAD mock, backed by dataset), `TicketRouter` (email/mock-Jira), `CommunityRepository` (seeded in-memory default; `FirebaseCommunityRepository` ready but **needs `google-services.json`** to go live), `PhotoIssueDetector` (ML Kit / mock).
+## Data sync details
+- Firebase RTDB layout: `feedback/{id}`, `votes/{id}/{voterId}`, `pulse/{date}/{userId}={mood,building,floor,updatedAt}`, `fridges/{floorKey}/{fridgeId}={occupancy,updatedBy,updatedAt}`.
+- Pulse seeded for demo via REST `PATCH` (multi-path, merges): see throwaway script logic that maps real staff IDs→their building/floor and writes moods for a date range. The graph is data-only for the rolling 7-day window — re-seed when the week moves.
+- Models: `FridgeOccupancy`, `PulseRecord`, `WeeklyPulse`/`WeeklyPulsePoint`, `ThemeMode`. `Dates`: `isoDate`, `epochDay`, `currentWeekDates`, `currentWeekToDate`, `lastSevenDays`, `weekdayInitial`.
 
 ## Git / state
-- Remote `origin git@github.com:sergiupascu14/ggg-teamb.git`. Work branch `feat/office-feedback-mvp`. Latest = merge `b6db990` (UI redesign + AI photo categorization). `main` has prior MVP+AI.
-- OpenSpec planning in `openspec/changes/office-feedback-app/` (proposal/design/specs/tasks). Validate: `openspec validate "office-feedback-app"`.
-- Status: builds clean, ~136 unit tests pass, ~97% line coverage. Firebase not live; AI photo uses ML Kit on-device.
+- Remote `origin git@github.com:sergiupascu14/ggg-teamb.git`. **`main` is the integration branch and is current** (latest `03255f9`, "rolling last-7-days graph"). All session work (CLOOJ redesign, Firebase fridge+pulse sync, dark mode, nav reorder + Community landing, per-user check-in fix, full sign-out) is merged into `main`.
+- OpenSpec plans in `openspec/changes/` (validate with `openspec validate "<change>"`).
+- Status: builds clean (JDK 21), unit tests pass, **90% JaCoCo gate green**, Firebase live, verified on `emulator-5554` (incl. dark mode).

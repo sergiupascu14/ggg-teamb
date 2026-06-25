@@ -36,6 +36,14 @@ interface CredentialStore {
     fun hasPassword(): Boolean
     fun setPassword(password: String)
     fun verify(password: String): Boolean
+
+    /**
+     * Whether a logged-in session is remembered, so the app can skip the lock screen on relaunch.
+     * Set after a successful unlock / onboarding; cleared by [clear] on sign out.
+     */
+    fun isLoggedIn(): Boolean
+    fun setLoggedIn(loggedIn: Boolean)
+
     fun clear()
 }
 
@@ -69,6 +77,12 @@ class EncryptedCredentialStore(context: Context) : CredentialStore {
         return PasswordHasher.verify(password, salt, hash)
     }
 
+    override fun isLoggedIn(): Boolean = prefs.getBoolean(KEY_LOGGED_IN, false)
+
+    override fun setLoggedIn(loggedIn: Boolean) {
+        prefs.edit().putBoolean(KEY_LOGGED_IN, loggedIn).apply()
+    }
+
     override fun clear() {
         prefs.edit().clear().apply()
     }
@@ -76,5 +90,6 @@ class EncryptedCredentialStore(context: Context) : CredentialStore {
     private companion object {
         const val KEY_SALT = "salt"
         const val KEY_HASH = "hash"
+        const val KEY_LOGGED_IN = "logged_in"
     }
 }

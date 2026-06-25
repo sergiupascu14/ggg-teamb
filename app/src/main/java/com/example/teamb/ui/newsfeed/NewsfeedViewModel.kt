@@ -27,6 +27,7 @@ data class NewsfeedFilter(
 )
 
 data class NewsfeedUiState(
+    val loading: Boolean = true,
     val rows: List<NewsfeedRow> = emptyList(),
     val filter: NewsfeedFilter = NewsfeedFilter(),
     val buildings: List<Building> = emptyList(),
@@ -56,6 +57,8 @@ class NewsfeedViewModel(
         combine(feed, filter, currentUserId) { items, f, uid ->
             val filtered = items.filter { matches(it, f) }
             NewsfeedUiState(
+                // The feed flow only emits once the community store responds → no longer loading.
+                loading = false,
                 rows = filtered.map { NewsfeedRow(it, resolveName(it.userId)) },
                 filter = f,
                 buildings = desk.buildings(),

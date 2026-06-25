@@ -165,6 +165,7 @@ class OnboardingViewModel(
         }
         _state.update { it.copy(saving = true) }
         credentialStore.setPassword(s.password)
+        credentialStore.setLoggedIn(true) // first-time users are signed in; remember it for relaunch
         profileStore.save(profile)
         _state.update { it.copy(saving = false, completed = true) }
         return true

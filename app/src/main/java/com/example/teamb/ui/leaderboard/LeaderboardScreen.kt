@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +35,7 @@ import com.example.teamb.AppContainer
 import com.example.teamb.data.model.LeaderboardEntry
 import com.example.teamb.ui.components.GarminHeader
 import com.example.teamb.ui.components.ScreenTitle
+import com.example.teamb.ui.components.ShimmerBox
 import com.example.teamb.ui.components.SurfaceCard
 import com.example.teamb.ui.theme.AccentBlue
 import com.example.teamb.ui.theme.CardBorder
@@ -64,7 +67,9 @@ fun LeaderboardScreen(container: AppContainer) {
             val rows = entries
             Box(Modifier.padding(top = 16.dp)) {
                 when {
-                    rows == null -> Unit // loading; render nothing until the first result lands
+                    rows == null -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        repeat(5) { LeaderboardRowSkeleton() }
+                    }
                     rows.isEmpty() -> Column(
                         modifier = Modifier.fillMaxWidth().padding(top = 40.dp),
                         verticalArrangement = Arrangement.Center,
@@ -141,6 +146,24 @@ private fun LeaderboardRow(rank: Int, entry: LeaderboardEntry) {
         }
     } else {
         SurfaceCard(padding = 16) { rowContent() }
+    }
+}
+
+/** Shimmering placeholder shaped like a [LeaderboardRow], shown while the leaderboard loads. */
+@Composable
+private fun LeaderboardRowSkeleton() {
+    SurfaceCard(padding = 16) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            ShimmerBox(Modifier.size(40.dp), shape = CircleShape)
+            Column(modifier = Modifier.weight(1f)) {
+                ShimmerBox(Modifier.width(140.dp).height(18.dp))
+            }
+            ShimmerBox(Modifier.width(28.dp).height(22.dp))
+        }
     }
 }
 
