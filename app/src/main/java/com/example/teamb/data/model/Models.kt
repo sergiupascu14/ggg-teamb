@@ -122,8 +122,21 @@ data class Reward(
     val unlocked: Boolean,
 )
 
-/** Result of analyzing a feedback photo. */
-data class PhotoSuggestion(
-    val category: FeedbackCategory,
-    val description: String,
-)
+enum class PhotoAnalysisFailure {
+    DISABLED,
+    UNAVAILABLE,
+    TIMEOUT,
+}
+
+/** Result of analyzing a feedback photo into a user-reviewable issue draft. */
+data class PhotoCategorizationResult(
+    val detectedIssue: String? = null,
+    val description: String? = null,
+    val suggestedCategory: FeedbackCategory? = null,
+    val confidence: Float = 0f,
+    val failure: PhotoAnalysisFailure? = null,
+) {
+    init {
+        require(confidence in 0f..1f) { "confidence must be between 0 and 1" }
+    }
+}
