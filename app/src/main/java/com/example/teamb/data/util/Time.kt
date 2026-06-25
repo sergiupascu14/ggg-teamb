@@ -43,6 +43,43 @@ object Dates {
             iso
         }
     }
+
+    /**
+     * ISO dates from Monday of the current week through *today* (inclusive), UTC. Used so the
+     * weekly pulse graph only spans elapsed days rather than padding out future days.
+     */
+    fun currentWeekToDate(millis: Long): List<String> {
+        val full = currentWeekDates(millis)
+        val today = isoDate(millis)
+        val idx = full.indexOf(today)
+        return if (idx >= 0) full.subList(0, idx + 1) else full
+    }
+
+    /** The last seven ISO dates ending today (today-6 … today), oldest first, UTC. */
+    fun lastSevenDays(millis: Long): List<String> {
+        val cal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            timeInMillis = millis
+            add(java.util.Calendar.DAY_OF_MONTH, -6)
+        }
+        return (0 until 7).map {
+            val iso = isoDate(cal.timeInMillis)
+            cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            iso
+        }
+    }
+
+    private val WEEKDAY_INITIALS = listOf("M", "T", "W", "T", "F", "S", "S")
+
+    /** Single-letter weekday initial (Mon→"M" … Sun→"S") for an ISO date; "?" if unparseable. */
+    fun weekdayInitial(iso: String): String {
+        val millis = runCatching {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                .apply { timeZone = TimeZone.getTimeZone("UTC") }
+                .parse(iso)?.time
+        }.getOrNull() ?: return "?"
+        val mondayIndex = (((epochDay(millis) + 3) % 7 + 7) % 7).toInt() // epoch day 0 = Thursday
+        return WEEKDAY_INITIALS[mondayIndex]
+    }
 }
 
 /** Pure consecutive-day streak logic. */

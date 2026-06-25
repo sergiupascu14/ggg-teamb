@@ -41,4 +41,39 @@ class CurrentWeekDatesTest {
         assertEquals("2020-12-28", week.first())
         assertEquals("2021-01-03", week.last())
     }
+
+    @Test
+    fun week_to_date_runs_monday_through_today_only() {
+        // 18628 epoch days = Fri 2021-01-01 → Mon 2020-12-28 .. Fri 2021-01-01 (5 days).
+        val toDate = Dates.currentWeekToDate(18628 * dayMs)
+        assertEquals(5, toDate.size)
+        assertEquals("2020-12-28", toDate.first())
+        assertEquals("2021-01-01", toDate.last())
+    }
+
+    @Test
+    fun week_to_date_is_just_monday_on_monday() {
+        // 18631 epoch days = Mon 2021-01-04.
+        val toDate = Dates.currentWeekToDate(18631 * dayMs)
+        assertEquals(listOf("2021-01-04"), toDate)
+    }
+
+    @Test
+    fun last_seven_days_ends_today_and_spans_a_week() {
+        // 18628 epoch days = Fri 2021-01-01 → 2020-12-26 .. 2021-01-01.
+        val days = Dates.lastSevenDays(18628 * dayMs)
+        assertEquals(7, days.size)
+        assertEquals("2020-12-26", days.first())
+        assertEquals("2021-01-01", days.last())
+        assertEquals(days.sorted(), days)
+    }
+
+    @Test
+    fun weekday_initial_maps_each_day() {
+        assertEquals("F", Dates.weekdayInitial("2021-01-01")) // Friday
+        assertEquals("S", Dates.weekdayInitial("2021-01-02")) // Saturday
+        assertEquals("S", Dates.weekdayInitial("2021-01-03")) // Sunday
+        assertEquals("M", Dates.weekdayInitial("2021-01-04")) // Monday
+        assertEquals("?", Dates.weekdayInitial("not-a-date"))
+    }
 }

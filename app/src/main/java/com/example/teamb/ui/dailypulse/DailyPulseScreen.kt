@@ -49,6 +49,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.teamb.AppContainer
 import com.example.teamb.data.model.WeeklyPulse
+import com.example.teamb.data.util.Dates
 import com.example.teamb.ui.components.AppTextField
 import com.example.teamb.ui.components.GarminHeader
 import com.example.teamb.ui.components.InfoBanner
@@ -70,7 +71,6 @@ import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.theme.TextSecondary
 
 private val MOODS = listOf("😞", "🙁", "😐", "🙂", "😄")
-private val WEEKDAY_LABELS = listOf("M", "T", "W", "T", "F", "S", "S")
 
 // Distinct, theme-stable series colors for the weekly graph.
 private val YOU_COLOR = FlameOrange
@@ -321,7 +321,7 @@ private fun WeeklyPulseChart(weekly: WeeklyPulse, modifier: Modifier = Modifier)
             val bottomPad = 8f
             val chartW = size.width - leftPad - rightPad
             val chartH = size.height - topPad - bottomPad
-            val n = 7
+            val n = weekly.days.size.coerceAtLeast(1)
 
             fun xFor(i: Int) = leftPad + if (n == 1) chartW / 2 else chartW * i / (n - 1)
             // Mood 1..5 mapped bottom..top.
@@ -347,9 +347,10 @@ private fun WeeklyPulseChart(weekly: WeeklyPulse, modifier: Modifier = Modifier)
             drawSeries(you, YOU_COLOR)
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
-            WEEKDAY_LABELS.forEach { day ->
+            // Labels reflect each day's actual weekday across the rolling window.
+            weekly.days.forEach { point ->
                 Text(
-                    day,
+                    Dates.weekdayInitial(point.date),
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelSmall,

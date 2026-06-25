@@ -71,7 +71,8 @@ class DailyPulseViewModel(
 
     private fun observeWeek() {
         weekJob?.cancel()
-        val weekDates = Dates.currentWeekDates(clock.nowMillis())
+        // Rolling last 7 days ending today.
+        val weekDates = Dates.lastSevenDays(clock.nowMillis())
         weekJob = viewModelScope.launch {
             pulseSync.observeWeek(weekDates).collect { records ->
                 val u = user
