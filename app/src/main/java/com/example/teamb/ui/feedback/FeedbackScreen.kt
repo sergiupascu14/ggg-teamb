@@ -1,5 +1,9 @@
 package com.example.teamb.ui.feedback
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,20 +31,22 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,6 +55,7 @@ import com.example.teamb.AppContainer
 import com.example.teamb.data.model.FeedbackCategory
 import com.example.teamb.data.model.FeedbackSentiment
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun FeedbackScreen(container: AppContainer) {
@@ -62,6 +68,8 @@ fun FeedbackScreen(container: AppContainer) {
     )
     val state by vm.state.collectAsState()
     val profile by container.profileStore.profile.collectAsState(initial = null)
+    val context = LocalContext.current
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     // Prefill building/floor/location from the local profile once it's available.
     LaunchedEffect(profile) {
@@ -74,9 +82,32 @@ fun FeedbackScreen(container: AppContainer) {
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> vm.onPhotoPicked(uri?.toString()) },
     )
-
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            val uri = pendingCameraUri
+            pendingCameraUri = null
+            vm.onPhotoPicked(if (success) uri?.toString() else null)
+        },
+    )
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    fun launchCameraCapture() {
+        val uri = createCameraImageUri(context)
+        pendingCameraUri = uri
+        cameraLauncher.launch(uri)
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            if (granted) {
+                launchCameraCapture()
+            } else {
+                pendingCameraUri = null
+                scope.launch { snackbarHostState.showSnackbar("Camera permission is required to take a photo") }
+            }
+        },
+    )
 
     // Surface the one-shot submit result as a snackbar, then clear it.
     LaunchedEffect(state.result) {
@@ -110,14 +141,24 @@ fun FeedbackScreen(container: AppContainer) {
 
             CategoryDropdown(
                 selected = state.form.category,
+                isError = state.error == "Please choose a category",
                 onSelect = vm::setCategory,
             )
+
+            if (state.form.photoUri != null || !state.form.issueLabel.isNullOrBlank()) {
+                OutlinedTextField(
+                    value = state.form.issueLabel.orEmpty(),
+                    onValueChange = vm::setIssueLabel,
+                    label = { Text("Detected issue") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             OutlinedTextField(
                 value = state.form.message,
                 onValueChange = vm::setMessage,
                 label = { Text("Your feedback") },
-                isError = state.error != null,
+                isError = state.error == "Please describe your feedback",
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -128,23 +169,20 @@ fun FeedbackScreen(container: AppContainer) {
             PhotoSection(
                 photoUri = state.form.photoUri,
                 onPick = { photoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                onCapture = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        launchCameraCapture()
+                    } else {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
                 onRemove = { vm.onPhotoPicked(null) },
             )
 
-            state.suggestion?.let { suggestion ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AssistChip(
-                        onClick = vm::applySuggestion,
-                        label = { Text("Suggested: ${suggestion.category.label} — ${suggestion.description}") },
-                    )
-                    TextButton(onClick = vm::dismissSuggestion) { Text("Dismiss") }
-                }
-                Button(onClick = vm::applySuggestion) { Text("Apply") }
-            }
+            PhotoDraftStatusSection(
+                status = state.photoDraftStatus,
+                draft = state.photoDraft,
+            )
 
             ToggleRow(
                 label = "Submit anonymously",
@@ -173,10 +211,15 @@ fun FeedbackScreen(container: AppContainer) {
 
             FilledTonalButton(
                 onClick = { vm.submit(currentUserId) },
-                enabled = !state.submitting,
+                enabled = !state.submitting && state.photoDraftStatus != PhotoDraftStatus.ANALYZING,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(if (state.submitting) "Submitting…" else "Submit")
+                val label = when {
+                    state.submitting -> "Submitting…"
+                    state.photoDraftStatus == PhotoDraftStatus.ANALYZING -> "Generating draft…"
+                    else -> "Submit"
+                }
+                Text(label)
             }
         }
     }
@@ -212,7 +255,8 @@ private fun SentimentButton(label: String, selected: Boolean, onClick: () -> Uni
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategoryDropdown(
-    selected: FeedbackCategory,
+    selected: FeedbackCategory?,
+    isError: Boolean,
     onSelect: (FeedbackCategory) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -221,9 +265,10 @@ private fun CategoryDropdown(
         onExpandedChange = { expanded = it },
     ) {
         OutlinedTextField(
-            value = selected.label,
+            value = selected?.label.orEmpty(),
             onValueChange = {},
             readOnly = true,
+            isError = isError,
             label = { Text("Category") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
@@ -251,6 +296,7 @@ private fun CategoryDropdown(
 private fun PhotoSection(
     photoUri: String?,
     onPick: () -> Unit,
+    onCapture: () -> Unit,
     onRemove: () -> Unit,
 ) {
     Row(
@@ -267,9 +313,59 @@ private fun PhotoSection(
                     .size(72.dp)
                     .clip(RoundedCornerShape(8.dp)),
             )
-            OutlinedButton(onClick = onRemove) { Text("Remove") }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onPick) { Text("Choose from gallery") }
+                OutlinedButton(onClick = onCapture) { Text("Take photo") }
+                OutlinedButton(onClick = onRemove) { Text("Remove") }
+            }
         } else {
-            OutlinedButton(onClick = onPick) { Text("Attach photo") }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onPick) { Text("Choose from gallery") }
+                OutlinedButton(onClick = onCapture) { Text("Take photo") }
+            }
+        }
+    }
+}
+
+private fun createCameraImageUri(context: Context): Uri {
+    val photosDir = File(context.cacheDir, "feedback-photos").apply { mkdirs() }
+    val imageFile = File(photosDir, "feedback-${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        imageFile,
+    )
+}
+
+@Composable
+private fun PhotoDraftStatusSection(
+    status: PhotoDraftStatus,
+    draft: com.example.teamb.data.model.PhotoCategorizationResult?,
+) {
+    if (status == PhotoDraftStatus.IDLE) return
+    val message = when (status) {
+        PhotoDraftStatus.ANALYZING -> "Generating an issue draft from your photo…"
+        PhotoDraftStatus.READY -> "Draft generated from your photo. Review the suggested fields before submitting."
+        PhotoDraftStatus.LOW_CONFIDENCE -> "A draft was generated, but the category needs your review."
+        PhotoDraftStatus.UNAVAILABLE -> "Suggestions could not be generated. You can continue manually."
+        PhotoDraftStatus.IDLE -> return
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(message, style = MaterialTheme.typography.bodyMedium)
+        draft?.detectedIssue?.let {
+            Text("Issue: $it", style = MaterialTheme.typography.bodySmall)
+        }
+        draft?.suggestedCategory?.let {
+            Text("Suggested category: ${it.label}", style = MaterialTheme.typography.bodySmall)
+        }
+        if (draft != null && status != PhotoDraftStatus.UNAVAILABLE) {
+            Text(
+                "Confidence: ${(draft.confidence * 100).toInt()}%",
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }

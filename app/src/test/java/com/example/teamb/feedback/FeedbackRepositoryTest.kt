@@ -40,9 +40,11 @@ class FeedbackRepositoryTest {
         anonymous: Boolean = false,
         communityVisible: Boolean = false,
         category: FeedbackCategory = FeedbackCategory.KITCHEN,
+        issueLabel: String? = null,
     ) = FeedbackForm(
         category = category,
         sentiment = sentiment,
+        issueLabel = issueLabel,
         message = message,
         anonymous = anonymous,
         communityVisible = communityVisible,
@@ -127,5 +129,36 @@ class FeedbackRepositoryTest {
 
         assertNotNull(repo.validate(form(FeedbackSentiment.ISSUE, message = "   ")))
         assertNull(repo.validate(form(FeedbackSentiment.ISSUE, message = "Real feedback")))
+    }
+
+    @Test
+    fun validate_missing_category_is_error() {
+        val (repo, _, _) = fixture()
+
+        assertEquals(
+            "Please choose a category",
+            repo.validate(form(FeedbackSentiment.ISSUE, category = FeedbackCategory.KITCHEN).copy(category = null)),
+        )
+    }
+
+    @Test
+    fun submit_persists_issue_label_and_final_message() = runTest {
+        val (repo, daos, _) = fixture()
+        val (feedbackDao, _) = daos
+
+        repo.submit(
+            form(
+                sentiment = FeedbackSentiment.ISSUE,
+                category = FeedbackCategory.KITCHEN,
+                issueLabel = "Leaking sink",
+                message = "Water is pooling under the sink.",
+            ),
+            userId,
+        )
+
+        val saved = feedbackDao.all.single()
+        assertEquals("Leaking sink", saved.issueLabel)
+        assertEquals("Water is pooling under the sink.", saved.message)
+        assertEquals(FeedbackCategory.KITCHEN.name, saved.category)
     }
 }

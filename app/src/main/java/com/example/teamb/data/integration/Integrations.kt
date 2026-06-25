@@ -3,7 +3,8 @@ package com.example.teamb.data.integration
 import com.example.teamb.data.desk.DeskAllocationRepository
 import com.example.teamb.data.model.Employee
 import com.example.teamb.data.model.FeedbackCategory
-import com.example.teamb.data.model.PhotoSuggestion
+import com.example.teamb.data.model.PhotoAnalysisFailure
+import com.example.teamb.data.model.PhotoCategorizationResult
 import com.example.teamb.data.model.TicketRoute
 
 /** Stand-in for GarminAD. The mock is backed by the bundled desk allocation dataset. */
@@ -73,23 +74,94 @@ class MockJiraTicketRouter : TicketRouter {
     }
 }
 
+class PhotoIssueCategoryMapper(
+    private val categoryConfidenceThreshold: Float = 0.6f,
+) {
+    fun map(issueLabel: String, confidence: Float): FeedbackCategory? {
+        if (confidence < categoryConfidenceThreshold) return null
+        val lower = issueLabel.lowercase()
+        return when {
+            "elevator" in lower || "lift" in lower || "escalator" in lower -> FeedbackCategory.ELEVATORS
+            "kitchen" in lower || "sink" in lower || "coffee" in lower
+                || "food" in lower || "microwave" in lower || "refrigerator" in lower
+                || "countertop" in lower || "tableware" in lower -> FeedbackCategory.KITCHEN
+            "desk" in lower || "chair" in lower || "workspace" in lower
+                || "computer" in lower || "monitor" in lower || "keyboard" in lower
+                || "laptop" in lower || "office" in lower -> FeedbackCategory.DESK_AREA
+            "meeting" in lower || "room" in lower || "conference" in lower
+                || "whiteboard" in lower || "projector" in lower -> FeedbackCategory.MEETING_ROOMS
+            "bathroom" in lower || "restroom" in lower || "dryer" in lower
+                || "toilet" in lower || "faucet" in lower || "plumbing" in lower -> FeedbackCategory.BATHROOMS
+            "temperature" in lower || "ac" in lower || "air" in lower
+                || "hvac" in lower || "vent" in lower || "heater" in lower -> FeedbackCategory.TEMPERATURE
+            "parking" in lower || "car" in lower || "vehicle" in lower
+                || "automobile" in lower -> FeedbackCategory.PARKING
+            else -> FeedbackCategory.OTHER
+        }
+    }
+}
+
 /** Detects issues from a feedback photo. Phase-3 capability; always optional and non-blocking. */
 interface PhotoIssueDetector {
-    /** Returns a suggestion, or null when nothing confident / unavailable. */
-    suspend fun analyze(photoUri: String): PhotoSuggestion?
+    /** Returns a reviewable issue draft or a failure state; callers must not block submission on it. */
+    suspend fun analyze(photoUri: String): PhotoCategorizationResult
 }
 
 /** Heuristic stand-in: keys off the file name so the demo is deterministic. */
-class MockPhotoIssueDetector : PhotoIssueDetector {
-    override suspend fun analyze(photoUri: String): PhotoSuggestion? {
+class MockPhotoIssueDetector(
+    private val mapper: PhotoIssueCategoryMapper = PhotoIssueCategoryMapper(),
+) : PhotoIssueDetector {
+    override suspend fun analyze(photoUri: String): PhotoCategorizationResult {
         val lower = photoUri.lowercase()
-        val category = when {
-            "elevator" in lower || "lift" in lower -> FeedbackCategory.ELEVATORS
-            "kitchen" in lower || "sink" in lower -> FeedbackCategory.KITCHEN
-            "desk" in lower -> FeedbackCategory.DESK_AREA
-            "room" in lower -> FeedbackCategory.MEETING_ROOMS
-            else -> return null
+        when {
+            "disabled" in lower -> return PhotoCategorizationResult(failure = PhotoAnalysisFailure.DISABLED)
+            "offline" in lower || "unavailable" in lower -> {
+                return PhotoCategorizationResult(failure = PhotoAnalysisFailure.UNAVAILABLE)
+            }
+            "timeout" in lower -> return PhotoCategorizationResult(failure = PhotoAnalysisFailure.TIMEOUT)
         }
-        return PhotoSuggestion(category, "Possible ${category.label.lowercase()} issue detected in photo")
+        val (issueLabel, description, confidence) = when {
+            "elevator" in lower || "lift" in lower -> Triple(
+                "Elevator access issue",
+                "Elevator equipment appears to be malfunctioning or obstructed.",
+                0.95f,
+            )
+            "kitchen" in lower || "sink" in lower || "coffee" in lower -> Triple(
+                "Kitchen maintenance issue",
+                "Kitchen equipment or cleanliness may need attention.",
+                0.92f,
+            )
+            "desk" in lower || "chair" in lower -> Triple(
+                "Desk area issue",
+                "A desk area problem is visible in the uploaded photo.",
+                0.9f,
+            )
+            "meeting" in lower || "room" in lower -> Triple(
+                "Meeting room issue",
+                "A meeting room problem is visible in the uploaded photo.",
+                0.88f,
+            )
+            "bathroom" in lower || "dryer" in lower -> Triple(
+                "Bathroom maintenance issue",
+                "A bathroom maintenance problem is visible in the uploaded photo.",
+                0.9f,
+            )
+            "parking" in lower || "car" in lower -> Triple(
+                "Parking issue",
+                "The uploaded photo suggests a parking-area problem.",
+                0.87f,
+            )
+            else -> Triple(
+                "Unclear facilities issue",
+                "A possible office issue was detected, but the category needs your review.",
+                0.35f,
+            )
+        }
+        return PhotoCategorizationResult(
+            detectedIssue = issueLabel,
+            description = description,
+            suggestedCategory = mapper.map(issueLabel, confidence),
+            confidence = confidence,
+        )
     }
 }

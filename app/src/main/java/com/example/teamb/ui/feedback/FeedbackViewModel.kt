@@ -3,9 +3,10 @@ package com.example.teamb.ui.feedback
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.teamb.data.integration.PhotoIssueDetector
+import com.example.teamb.data.model.PhotoAnalysisFailure
+import com.example.teamb.data.model.PhotoCategorizationResult
 import com.example.teamb.data.model.FeedbackCategory
 import com.example.teamb.data.model.FeedbackSentiment
-import com.example.teamb.data.model.PhotoSuggestion
 import com.example.teamb.data.repository.FeedbackForm
 import com.example.teamb.data.repository.FeedbackRepository
 import com.example.teamb.data.repository.SubmitResult
@@ -15,16 +16,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+enum class PhotoDraftStatus {
+    IDLE,
+    ANALYZING,
+    READY,
+    LOW_CONFIDENCE,
+    UNAVAILABLE,
+}
+
 /** UI state for the feedback form. [form] is the live editable form; the rest is presentation. */
 data class FeedbackUiState(
     val form: FeedbackForm = FeedbackForm(
-        category = FeedbackCategory.OTHER,
         sentiment = FeedbackSentiment.ISSUE,
         message = "",
     ),
     val error: String? = null,
     val submitting: Boolean = false,
-    val suggestion: PhotoSuggestion? = null,
+    val photoDraftStatus: PhotoDraftStatus = PhotoDraftStatus.IDLE,
+    val photoDraft: PhotoCategorizationResult? = null,
     val result: SubmitResult? = null,
 )
 
@@ -43,8 +52,13 @@ class FeedbackViewModel(
     fun setSentiment(sentiment: FeedbackSentiment) =
         updateForm { it.copy(sentiment = sentiment) }
 
-    fun setCategory(category: FeedbackCategory) =
-        updateForm { it.copy(category = category) }
+    fun setCategory(category: FeedbackCategory) {
+        _state.update { it.copy(form = it.form.copy(category = category), error = null) }
+    }
+
+    fun setIssueLabel(issueLabel: String) {
+        _state.update { it.copy(form = it.form.copy(issueLabel = issueLabel.ifBlank { null }), error = null) }
+    }
 
     fun setMessage(message: String) {
         _state.update { it.copy(form = it.form.copy(message = message), error = null) }
@@ -75,25 +89,42 @@ class FeedbackViewModel(
 
     /** Records the picked photo and kicks off best-effort, non-blocking analysis. */
     fun onPhotoPicked(uri: String?) {
-        updateForm { it.copy(photoUri = uri) }
-        _state.update { it.copy(suggestion = null) }
-        if (uri == null) return
+        if (uri == null) {
+            _state.update {
+                it.copy(
+                    form = it.form.copy(
+                        photoUri = null,
+                        category = null,
+                        issueLabel = null,
+                        message = "",
+                    ),
+                    error = null,
+                    photoDraftStatus = PhotoDraftStatus.IDLE,
+                    photoDraft = null,
+                )
+            }
+            return
+        }
+        _state.update {
+            it.copy(
+                form = it.form.copy(photoUri = uri),
+                photoDraftStatus = PhotoDraftStatus.ANALYZING,
+                photoDraft = null,
+            )
+        }
         viewModelScope.launch {
-            val suggestion = runCatching { photoDetector.analyze(uri) }.getOrNull()
-            if (suggestion != null && _state.value.form.photoUri == uri) {
-                _state.update { it.copy(suggestion = suggestion) }
+            val draft = runCatching { photoDetector.analyze(uri) }
+                .getOrElse { PhotoCategorizationResult(failure = PhotoAnalysisFailure.UNAVAILABLE) }
+            if (_state.value.form.photoUri == uri) {
+                _state.update { state ->
+                    state.copy(
+                        form = state.form.applyDraftIfNeeded(draft),
+                        photoDraftStatus = statusFor(draft),
+                        photoDraft = draft,
+                    )
+                }
             }
         }
-    }
-
-    /** Applies the suggested category and dismisses the chip. */
-    fun applySuggestion() {
-        val suggestion = _state.value.suggestion ?: return
-        _state.update { it.copy(form = it.form.copy(category = suggestion.category), suggestion = null) }
-    }
-
-    fun dismissSuggestion() {
-        _state.update { it.copy(suggestion = null) }
     }
 
     /** Clears the one-shot submit result after the UI has shown it. */
@@ -103,7 +134,7 @@ class FeedbackViewModel(
 
     /** Validates and submits. On success, resets the form and exposes the [SubmitResult]. */
     fun submit(currentUserId: String) {
-        if (_state.value.submitting) return
+        if (_state.value.submitting || _state.value.photoDraftStatus == PhotoDraftStatus.ANALYZING) return
         val form = _state.value.form
         val error = repository.validate(form)
         if (error != null) {
@@ -115,7 +146,6 @@ class FeedbackViewModel(
             val result = repository.submit(form, currentUserId)
             _state.value = FeedbackUiState(
                 form = FeedbackForm(
-                    category = FeedbackCategory.OTHER,
                     sentiment = FeedbackSentiment.ISSUE,
                     message = "",
                     building = form.building,
@@ -129,5 +159,20 @@ class FeedbackViewModel(
 
     private fun updateForm(transform: (FeedbackForm) -> FeedbackForm) {
         _state.update { it.copy(form = transform(it.form)) }
+    }
+
+    private fun FeedbackForm.applyDraftIfNeeded(draft: PhotoCategorizationResult): FeedbackForm {
+        if (draft.failure != null) return this
+        return copy(
+            issueLabel = issueLabel.takeUnless { it.isNullOrBlank() } ?: draft.detectedIssue,
+            message = if (message.isBlank() && !draft.description.isNullOrBlank()) draft.description ?: message else message,
+            category = category ?: draft.suggestedCategory,
+        )
+    }
+
+    private fun statusFor(draft: PhotoCategorizationResult): PhotoDraftStatus = when {
+        draft.failure != null -> PhotoDraftStatus.UNAVAILABLE
+        draft.suggestedCategory == null -> PhotoDraftStatus.LOW_CONFIDENCE
+        else -> PhotoDraftStatus.READY
     }
 }
