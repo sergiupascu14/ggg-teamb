@@ -45,6 +45,7 @@ import com.example.teamb.ui.theme.DisabledFill
 import com.example.teamb.ui.theme.GarminBlue
 import com.example.teamb.ui.theme.GarminBlueMid
 import com.example.teamb.ui.theme.Navy
+import com.example.teamb.ui.theme.OnBrand
 import com.example.teamb.ui.theme.TextDisabled
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
@@ -57,7 +58,7 @@ val BrandGradient: Brush
 /** The Garmin triangle + wordmark used in every header. The triangle carries the brand sky/cyan. */
 @Composable
 fun GarminLogo(onDark: Boolean = false) {
-    val color = if (onDark) CardSurface else GarminBlue
+    val color = if (onDark) OnBrand else GarminBlue
     val accent = if (onDark) BrandSky else BrandCyan
     Row(verticalAlignment = Alignment.CenterVertically) {
         Canvas(modifier = Modifier.size(14.dp)) {
@@ -156,8 +157,8 @@ fun PrimaryButton(
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = GarminBlue,
-            contentColor = CardSurface,
+            containerColor = Navy,
+            contentColor = OnBrand,
             disabledContainerColor = DisabledFill,
             disabledContentColor = TextDisabled,
         ),

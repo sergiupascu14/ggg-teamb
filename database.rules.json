@@ -14,6 +14,22 @@
           ".validate": "newData.val() == true"
         }
       }
+    },
+    "pulse": {
+      "$date": {
+        "$userId": {
+          ".write": "newData.hasChild('mood') && !newData.hasChild('name') && !newData.hasChild('email') && !newData.hasChild('supervisor')",
+          ".validate": "newData.child('mood').isNumber() && newData.child('mood').val() >= 1 && newData.child('mood').val() <= 5"
+        }
+      }
+    },
+    "fridges": {
+      "$floorKey": {
+        "$fridgeId": {
+          ".write": "newData.hasChild('occupancy') && !newData.hasChild('name') && !newData.hasChild('email')",
+          ".validate": "newData.child('occupancy').isNumber() && newData.child('occupancy').val() >= 0 && newData.child('occupancy').val() <= 100"
+        }
+      }
     }
   }
 }

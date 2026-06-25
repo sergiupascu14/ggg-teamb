@@ -124,6 +124,67 @@ data class Reward(
     val hint: String,
 )
 
+// ---------------------------------------------------------------------------
+// Shared (Firebase-synced) surfaces
+// ---------------------------------------------------------------------------
+
+/**
+ * Live occupancy of one shared fridge on a floor. Synced across devices; carries no PII —
+ * [updatedBy] is a Staff ID only. Occupancy is a 0..100 percentage.
+ */
+data class FridgeOccupancy(
+    val fridgeId: String,
+    val occupancy: Int,
+    val updatedBy: String? = null,
+    val updatedAt: Long = 0L,
+) {
+    init {
+        require(occupancy in 0..100) { "occupancy must be 0..100" }
+    }
+}
+
+/**
+ * One person's daily pulse mood, synced so the team can see company/floor averages.
+ * Linked only by [userId] + location (building/floor) + mood — never names.
+ */
+data class PulseRecord(
+    val userId: String,
+    val date: String, // ISO yyyy-MM-dd
+    val mood: Int,     // 1..5
+    val building: String? = null,
+    val floor: Int? = null,
+)
+
+/** One day in the weekly pulse graph: the viewer's own mood + floor & company averages. */
+data class WeeklyPulsePoint(
+    val date: String,
+    val youMood: Double? = null,
+    val floorAverage: Double? = null,
+    val companyAverage: Double? = null,
+)
+
+/** Aggregated weekly pulse: per-day series + week-long averages for you/floor/company. */
+data class WeeklyPulse(
+    val days: List<WeeklyPulsePoint> = emptyList(),
+    val youAverage: Double? = null,
+    val floorAverage: Double? = null,
+    val companyAverage: Double? = null,
+) {
+    val hasData: Boolean get() = days.any { it.companyAverage != null }
+}
+
+/** App theme preference. Resolved against the current system setting. */
+enum class ThemeMode {
+    SYSTEM, LIGHT, DARK;
+
+    /** Whether dark colors should be used given the current [systemDark] state. */
+    fun isDark(systemDark: Boolean): Boolean = when (this) {
+        SYSTEM -> systemDark
+        LIGHT -> false
+        DARK -> true
+    }
+}
+
 enum class PhotoAnalysisFailure {
     DISABLED,
     UNAVAILABLE,

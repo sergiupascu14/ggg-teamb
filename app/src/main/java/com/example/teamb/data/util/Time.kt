@@ -24,6 +24,25 @@ object Dates {
         fmt.timeZone = TimeZone.getTimeZone("UTC")
         return fmt.format(Date(millis))
     }
+
+    /**
+     * The seven ISO dates (Monday → Sunday, UTC) of the calendar week containing [millis].
+     * Used to scope the weekly pulse graph to the current week.
+     */
+    fun currentWeekDates(millis: Long): List<String> {
+        val cal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            firstDayOfWeek = java.util.Calendar.MONDAY
+            timeInMillis = millis
+        }
+        // DAY_OF_WEEK: SUN=1..SAT=7 → days since Monday.
+        val daysFromMonday = (cal.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7
+        cal.add(java.util.Calendar.DAY_OF_MONTH, -daysFromMonday)
+        return (0 until 7).map {
+            val iso = isoDate(cal.timeInMillis)
+            cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            iso
+        }
+    }
 }
 
 /** Pure consecutive-day streak logic. */

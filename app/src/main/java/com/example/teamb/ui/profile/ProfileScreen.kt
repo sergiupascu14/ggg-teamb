@@ -2,6 +2,7 @@ package com.example.teamb.ui.profile
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +42,7 @@ import androidx.compose.ui.window.PopupProperties
 import com.example.teamb.AppContainer
 import com.example.teamb.data.model.Building
 import com.example.teamb.data.model.Reward
+import com.example.teamb.data.model.ThemeMode
 import com.example.teamb.data.model.UserProfile
 import com.example.teamb.ui.components.BrandGradient
 import com.example.teamb.ui.components.FieldLabel
@@ -52,9 +55,14 @@ import com.example.teamb.ui.theme.BrandSky
 import com.example.teamb.ui.theme.CardBorder
 import com.example.teamb.ui.theme.CardSurface
 import com.example.teamb.ui.theme.GarminBlue
+import com.example.teamb.ui.theme.InputBorder
+import com.example.teamb.ui.theme.Navy
+import com.example.teamb.ui.theme.OnBrand
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
+import com.example.teamb.ui.theme.TextSecondary
 import com.example.teamb.ui.util.toDisplayName
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
@@ -65,6 +73,8 @@ fun ProfileScreen(
 ) {
     val profile by container.profileStore.profile.collectAsState(initial = null)
     val staffId = profile?.staffId
+    val themeMode by container.settingsStore.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+    val scope = rememberCoroutineScope()
 
     var streak by remember { mutableIntStateOf(0) }
     // Reward "points" = the user's public feedback count (drives the 10/50/100 tiers,
@@ -117,6 +127,13 @@ fun ProfileScreen(
                 }
             }
 
+            Box(Modifier.padding(top = 20.dp)) {
+                AppearanceCard(
+                    selected = themeMode,
+                    onSelect = { mode -> scope.launch { container.settingsStore.setThemeMode(mode) } },
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -133,10 +150,56 @@ fun ProfileScreen(
 }
 
 @Composable
+private fun AppearanceCard(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+    SurfaceCard {
+        Column(Modifier.fillMaxWidth()) {
+            Text("Appearance", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ThemeMode.entries.forEach { mode ->
+                    ThemeModeChip(
+                        label = mode.name.lowercase().replaceFirstChar { it.uppercase() },
+                        selected = mode == selected,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onSelect(mode) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeModeChip(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) Navy else CardSurface,
+        border = if (selected) null else BorderStroke(1.dp, InputBorder),
+    ) {
+        Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) OnBrand else TextSecondary,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
 private fun GradientHeader(name: String, subtitle: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = GarminBlue,
+        color = Navy,
         shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
         shadowElevation = 1.dp,
     ) {
@@ -147,7 +210,7 @@ private fun GradientHeader(name: String, subtitle: String) {
                     modifier = Modifier.padding(top = 20.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Surface(shape = CircleShape, color = CardSurface, modifier = Modifier.size(56.dp)) {
+                    Surface(shape = CircleShape, color = OnBrand, modifier = Modifier.size(56.dp)) {
                         Box(contentAlignment = Alignment.Center) {
                             Text("👤", style = MaterialTheme.typography.titleLarge)
                         }
@@ -156,7 +219,7 @@ private fun GradientHeader(name: String, subtitle: String) {
                         Text(
                             name.toDisplayName(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = CardSurface,
+                            color = OnBrand,
                             fontWeight = FontWeight.ExtraBold,
                         )
                         Text(
