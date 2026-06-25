@@ -24,3 +24,4 @@ node_modules/
 
 # Firebase secrets (never commit)
 google-services.json
+app/src/debug/google-services.json

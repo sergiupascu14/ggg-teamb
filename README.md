@@ -54,6 +54,16 @@ app/src/main/java/com/example/teamb/
   ui/ (theme, components, navigation, <feature> screens + ViewModels)
 ```
 
+## Firebase Setup
+
+Communitatea (newsfeed, voturi, leaderboard) folosește **Firebase Realtime Database** (proiect `clooj-ggg`).
+Consultă **[README-firebase.md](README-firebase.md)** pentru:
+- Cum obții `google-services.json` și îl plasezi local
+- Cum aplici regulile de securitate RTDB din `database.rules.json`
+- Cum pornești Firebase Emulator și încarci date de demo cu `scripts/seed.json`
+
+---
+
 ## Build & run
 
 Requires **JDK 17–21** (AGP 8.7 does not support JDK 25):

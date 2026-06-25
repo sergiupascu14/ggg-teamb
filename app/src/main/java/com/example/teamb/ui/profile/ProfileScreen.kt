@@ -67,13 +67,15 @@ fun ProfileScreen(
     var rewards by remember { mutableStateOf<List<Reward>>(emptyList()) }
 
     LaunchedEffect(staffId) {
-        streak = container.dailyPulseRepository.currentStreak()
-        points = staffId?.let { id ->
-            container.gamificationRepository.leaderboard(id)
-                .firstOrNull { it.userId == id }
-                ?.publicFeedbackCount
-        } ?: 0
-        rewards = container.gamificationRepository.rewardsFor(points)
+        runCatching {
+            streak = container.dailyPulseRepository.currentStreak()
+            points = staffId?.let { id ->
+                container.gamificationRepository.leaderboard(id)
+                    .firstOrNull { it.userId == id }
+                    ?.publicFeedbackCount
+            } ?: 0
+            rewards = container.gamificationRepository.rewardsFor(points)
+        }
     }
 
     Column(
