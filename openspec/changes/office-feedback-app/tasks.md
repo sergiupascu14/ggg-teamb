@@ -5,7 +5,7 @@
 - [ ] 1.3 Create the app package structure: `data` (db, repository, integration), `ui` (screens, components, theme), `notification`, and `model`
 - [ ] 1.4 Set up Room database (`AppDatabase`), DataStore for the user profile/settings, and a notification channel + helper
 - [ ] 1.5 Replace the placeholder `Greeting` in `MainActivity` with a `NavHost` + bottom navigation scaffold across the core destinations
-- [ ] 1.6 Add a seed/dev-data helper to populate sample newsfeed and leaderboard entries for demos
+- [ ] 1.6 Add a seed/dev-data helper to populate sample newsfeed and leaderboard entries in Firebase Realtime Database (linked only by `userId`) so voting/filtering are demoable before multiple real devices connect
 - [ ] 1.7 Convert the desk allocation dataset (`docs/desk-allocation/Desk_Allocation_Anonymized.xlsx`, per `AI_AGENT_GUIDE.md`) into a bundled app asset (e.g. JSON in `app/src/main/assets`) covering desks (id, building, floor, zone) and associates (staff ID → name, supervisor)
 - [ ] 1.8 Build a `DeskAllocationRepository`/lookup: parse the desk ID grammar `{Building}{Floor}-{Zone}{Row}-{DeskNum}`, expose the canonical building/floor enumeration (Tower 3–6, Riviera 3–5) and zones A–D, and provide Staff ID → profile and desk lookups
 

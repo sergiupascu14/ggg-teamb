@@ -40,7 +40,7 @@ The app is a greenfield Android project (`com.example.teamb`) bootstrapped with 
 ## Risks / Trade-offs
 
 - **Mock integrations may feel non-real in the demo** → keep mocks realistic (sample directory user, visible generated Jira id, an actual draft email via mailto intent) and clearly labeled.
-- **Local-only "community" data undermines the multi-user story** → seed the newsfeed/leaderboard with believable sample entries so voting and filtering are demoable.
+- **Community data must be genuinely shared across users, not local-only** → the newsfeed and leaderboard are backed by Firebase Realtime Database so feedback and votes sync across devices in real time; seed Firebase with believable sample entries so voting and filtering are demoable even before multiple real devices are connected.
 - **Notification permission denial / OEM Doze behavior could suppress reminders** → request permission with rationale, degrade gracefully, and provide an in-app way to open the Daily Pulse.
 - **Scope is large for a hackathon, yet all of it is in the MVP** → manage with strict build ordering (core → community → advanced) so each layer is demoable as it lands and integration risk is incremental; the full set still ships in the MVP.
 - **AI photo detection latency/cost** → run async, never block submission, and fall back silently when unavailable.
