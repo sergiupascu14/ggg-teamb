@@ -1,8 +1,8 @@
 > Status: implemented and verified on an emulator. 128 unit tests pass; JaCoCo line coverage 98.5%
 > on the scoped logic (90% gate enforced via `jacocoCoverageVerification`, wired into `check`).
 > Community data runs on a seeded in-memory `CommunityRepository` by default; the Firebase RTDB
-> implementation (`FirebaseCommunityRepository`) is written and ready but needs a `google-services.json`
-> to go live (see 7.1).
+> implementation (`FirebaseCommunityRepository`) is written and ready, `google-services.json` is in place
+> (project `clooj-ggg`) — AppContainer swap + rules deployment tracked in `connect-firebase-live-project`.
 
 ## 1. Project Foundation
 
@@ -55,7 +55,7 @@
 
 ## 7. Community Newsfeed (MVP)
 
-- [ ] 7.1 Add Firebase to the project — RTDB SDK dependency + schema + `FirebaseCommunityRepository` are DONE; **pending a `google-services.json`** to connect a live project (app currently runs on the seeded in-memory repo)
+- [x] 7.1 Add Firebase to the project — RTDB SDK dependency + schema + `FirebaseCommunityRepository` + `google-services.json` (project `clooj-ggg`) + `AppContainer` swap are DONE; `database.rules.json` committed, emulator template at `app/src/debug/google-services.json` — pending: deploy rules via Firebase Console + device smoke test
 - [x] 7.2 Implement a `NewsfeedRepository`/`CommunityRepository` that publishes community-visible feedback linking records only by `userId` (no name/supervisor/email) and observes them reactively; anonymous items carry no `userId`
 - [x] 7.3 Build the newsfeed screen showing community-visible feedback (category, location, photo, locally-resolved name or "Anonymous")
 - [x] 7.4 Implement voting: vote/un-vote toggle and per-item vote counts

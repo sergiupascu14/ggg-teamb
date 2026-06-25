@@ -1,0 +1,19 @@
+{
+  "rules": {
+    ".read": true,
+    "feedback": {
+      "$itemId": {
+        ".write": "newData.hasChildren(['category', 'sentiment', 'createdAt']) && !newData.hasChild('name') && !newData.hasChild('email') && !newData.hasChild('supervisor')",
+        ".validate": "newData.hasChildren(['category', 'sentiment', 'createdAt'])"
+      }
+    },
+    "votes": {
+      "$itemId": {
+        "$voterId": {
+          ".write": "auth == null || $voterId == auth.uid || newData.val() == true || !data.exists()",
+          ".validate": "newData.val() == true"
+        }
+      }
+    }
+  }
+}

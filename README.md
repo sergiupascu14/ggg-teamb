@@ -28,6 +28,16 @@ settings.gradle.kts
 gradle/libs.versions.toml      # Versiuni dependențe
 ```
 
+## Firebase Setup
+
+Communitatea (newsfeed, voturi, leaderboard) folosește **Firebase Realtime Database** (proiect `clooj-ggg`).
+Consultă **[README-firebase.md](README-firebase.md)** pentru:
+- Cum obții `google-services.json` și îl plasezi local
+- Cum aplici regulile de securitate RTDB din `database.rules.json`
+- Cum pornești Firebase Emulator și încarci date de demo cu `scripts/seed.json`
+
+---
+
 ## Rulare
 
 1. Deschide proiectul în **Android Studio** (Hedgehog sau mai nou). Studio va

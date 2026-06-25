@@ -1,0 +1,54 @@
+{
+  "feedback": {
+    "seed-1": {
+      "userId": "2008",
+      "category": "KITCHEN",
+      "sentiment": "POSITIVE",
+      "message": "The new coffee machine in the kitchen is fantastic!",
+      "building": "T",
+      "floor": 4,
+      "location": "Tower floor 4 kitchen",
+      "photoRef": null,
+      "createdAt": 1782303180833
+    },
+    "seed-2": {
+      "userId": "640",
+      "category": "ELEVATORS",
+      "sentiment": "ISSUE",
+      "message": "Elevator B has been slow all week.",
+      "building": "T",
+      "floor": 5,
+      "location": "Tower elevators",
+      "photoRef": null,
+      "createdAt": 1782216780833
+    },
+    "seed-3": {
+      "userId": null,
+      "category": "BATHROOMS",
+      "sentiment": "ISSUE",
+      "message": "Hand dryer on floor 3 is broken.",
+      "building": "R",
+      "floor": 3,
+      "location": "Riviera floor 3",
+      "photoRef": null,
+      "createdAt": 1782130380833
+    },
+    "seed-4": {
+      "userId": "600",
+      "category": "DESK_AREA",
+      "sentiment": "POSITIVE",
+      "message": "Love the new plants in the desk area!",
+      "building": "T",
+      "floor": 6,
+      "location": "Tower floor 6",
+      "photoRef": null,
+      "createdAt": 1782043980833
+    }
+  },
+  "votes": {
+    "seed-1": {},
+    "seed-2": {},
+    "seed-3": {},
+    "seed-4": {}
+  }
+}
