@@ -1,7 +1,10 @@
 package com.example.teamb.ui.onboarding
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,14 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,12 +28,33 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.teamb.AppContainer
 import com.example.teamb.data.model.Employee
+import com.example.teamb.ui.components.AppTextField
+import com.example.teamb.ui.components.FieldLabel
+import com.example.teamb.ui.components.GarminLogo
+import com.example.teamb.ui.components.OutlinedPillButton
+import com.example.teamb.ui.components.PrimaryButton
+import com.example.teamb.ui.components.SurfaceCard
+import com.example.teamb.ui.theme.AccentBlue
+import com.example.teamb.ui.theme.Canvas
+import com.example.teamb.ui.theme.CardBorder
+import com.example.teamb.ui.theme.CardSurface
+import com.example.teamb.ui.theme.GarminBlue
+import com.example.teamb.ui.theme.InputBorder
+import com.example.teamb.ui.theme.IssueText
+import com.example.teamb.ui.theme.TextMuted
+import com.example.teamb.ui.theme.TextPrimary
+import com.example.teamb.ui.theme.TextSecondary
+import com.example.teamb.ui.util.toDisplayName
 import kotlinx.coroutines.launch
 
 @Composable
@@ -46,17 +70,34 @@ fun OnboardingScreen(container: AppContainer, onCompleted: () -> Unit) {
     val state by vm.state.collectAsState()
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(state.completed) {
-        if (state.completed) onCompleted()
+    LaunchedEffect(state.completed) { if (state.completed) onCompleted() }
+
+    val stepIndex = when (state.step) {
+        OnboardingStep.IDENTITY -> 1
+        OnboardingStep.LOCATION -> 2
+        OnboardingStep.PASSWORD -> 3
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Canvas)
+            .statusBarsPadding()
+            .imePadding()
+            .padding(horizontal = 24.dp)
+            .padding(top = 20.dp, bottom = 20.dp),
     ) {
-        Text("Welcome to TeamB Office", style = MaterialTheme.typography.headlineSmall)
+        GarminLogo()
+        StepDots(stepIndex, modifier = Modifier.padding(top = 20.dp))
+        Text(
+            "Welcome to TeamB Office",
+            style = MaterialTheme.typography.headlineSmall,
+            color = TextPrimary,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Spacer(Modifier.height(16.dp))
         when (state.step) {
-            OnboardingStep.IDENTITY -> IdentityStep(state, vm)
+            OnboardingStep.IDENTITY -> IdentityStep(state, vm, Modifier.weight(1f))
             OnboardingStep.LOCATION -> LocationStep(state, vm)
             OnboardingStep.PASSWORD -> PasswordStep(state, vm, scope)
         }
@@ -64,18 +105,32 @@ fun OnboardingScreen(container: AppContainer, onCompleted: () -> Unit) {
 }
 
 @Composable
-private fun IdentityStep(state: OnboardingUiState, vm: OnboardingViewModel) {
-    Text("Who are you?", style = MaterialTheme.typography.titleMedium)
-    OutlinedTextField(
-        value = state.query,
-        onValueChange = vm::onSearch,
-        label = { Text("Search by name or staff id") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-    )
+private fun StepDots(step: Int, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        repeat(3) { i ->
+            Box(
+                Modifier
+                    .padding(end = 6.dp)
+                    .size(if (i + 1 == step) 22.dp else 8.dp, 8.dp)
+                    .background(if (i + 1 <= step) GarminBlue else InputBorder, RoundedCornerShape(4.dp))
+            )
+        }
+        Text(
+            "Step $step of 3",
+            style = MaterialTheme.typography.labelSmall,
+            color = TextMuted,
+            modifier = Modifier.padding(start = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun IdentityStep(state: OnboardingUiState, vm: OnboardingViewModel, modifier: Modifier = Modifier) {
+    Text("Who are you?", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
+    Spacer(Modifier.height(10.dp))
+    AppTextField(state.query, vm::onSearch, "Search by name or staff id")
 
     val listState = rememberLazyListState()
-    // Pre-scroll to the directory's suggested employee, if present in the current results.
     LaunchedEffect(state.suggestedStaffId, state.results) {
         val id = state.suggestedStaffId ?: return@LaunchedEffect
         val index = state.results.indexOfFirst { it.staffId == id }
@@ -84,50 +139,33 @@ private fun IdentityStep(state: OnboardingUiState, vm: OnboardingViewModel) {
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxWidth().height(360.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = modifier.fillMaxWidth().padding(top = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(state.results, key = { it.staffId }) { emp ->
-            EmployeeRow(
-                employee = emp,
-                selected = state.selected?.staffId == emp.staffId,
-                suggested = state.suggestedStaffId == emp.staffId,
-                onClick = { vm.selectEmployee(emp) },
-            )
+            EmployeeRow(emp, state.selected?.staffId == emp.staffId, state.suggestedStaffId == emp.staffId) {
+                vm.selectEmployee(emp)
+            }
         }
     }
-
-    Button(
-        onClick = vm::confirmIdentity,
-        enabled = state.canProceedFromIdentity,
-        modifier = Modifier.fillMaxWidth(),
-    ) { Text("Continue") }
+    Spacer(Modifier.height(12.dp))
+    PrimaryButton("Continue", vm::confirmIdentity, enabled = state.canProceedFromIdentity)
 }
 
 @Composable
-private fun EmployeeRow(
-    employee: Employee,
-    selected: Boolean,
-    suggested: Boolean,
-    onClick: () -> Unit,
-) {
-    Card(
+private fun EmployeeRow(employee: Employee, selected: Boolean, suggested: Boolean, onClick: () -> Unit) {
+    Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        colors = if (selected) {
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        } else {
-            CardDefaults.cardColors()
-        },
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) AccentBlue else CardSurface,
+        border = BorderStroke(if (selected) 1.5.dp else 1.dp, if (selected) GarminBlue else CardBorder),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(employee.name, style = MaterialTheme.typography.bodyLarge)
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text(employee.name.toDisplayName(), style = MaterialTheme.typography.titleSmall, color = TextPrimary)
             Text(
-                buildString {
-                    append(employee.staffId)
-                    if (suggested) append("  (suggested)")
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                if (suggested) "${employee.staffId} · suggested" else employee.staffId,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (suggested) GarminBlue else TextMuted,
             )
         }
     }
@@ -135,88 +173,55 @@ private fun EmployeeRow(
 
 @Composable
 private fun LocationStep(state: OnboardingUiState, vm: OnboardingViewModel) {
-    Text("Your desk", style = MaterialTheme.typography.titleMedium)
+    Text("Your desk", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
+    Spacer(Modifier.height(12.dp))
     val derived = state.derivedDeskId
-    if (state.hasAssignedDesk && derived != null) {
-        Text("We found your assigned desk:", style = MaterialTheme.typography.bodyMedium)
-        Text(derived.canonical, style = MaterialTheme.typography.headlineSmall)
-        Text(
-            "Building ${derived.building} · Floor ${derived.floor} · Zone ${derived.zone}",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    } else {
-        Text("Enter your desk code to set your location.", style = MaterialTheme.typography.bodyMedium)
-        OutlinedTextField(
-            value = state.deskCode,
-            onValueChange = vm::enterDeskCode,
-            label = { Text("Desk code (e.g. T6-C2-01)") },
-            singleLine = true,
-            isError = state.deskError != null,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        state.deskError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
-        derived?.let {
-            Text(
-                "Building ${it.building} · Floor ${it.floor} · Zone ${it.zone}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+    SurfaceCard {
+        Column {
+            if (state.hasAssignedDesk && derived != null) {
+                Text("We found your assigned desk", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                Text(derived.canonical, style = MaterialTheme.typography.headlineSmall, color = TextPrimary, modifier = Modifier.padding(vertical = 6.dp))
+                Text(
+                    "Building ${derived.building} · Floor ${derived.floor} · Zone ${derived.zone}",
+                    style = MaterialTheme.typography.bodyMedium, color = TextSecondary,
+                )
+            } else {
+                Text("Enter your desk code to set your location.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                Spacer(Modifier.height(10.dp))
+                AppTextField(state.deskCode, vm::enterDeskCode, "Desk code (e.g. T6-C2-01)", isError = state.deskError != null)
+                state.deskError?.let { Text(it, color = IssueText, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 6.dp)) }
+                derived?.let {
+                    Text(
+                        "Building ${it.building} · Floor ${it.floor} · Zone ${it.zone}",
+                        style = MaterialTheme.typography.bodyMedium, color = TextSecondary,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+            }
         }
     }
-
-    Spacer(Modifier.height(4.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TextButton(onClick = vm::back) { Text("Back") }
-        Button(
-            onClick = vm::confirmLocation,
-            enabled = state.canProceedFromLocation,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Continue") }
+    Spacer(Modifier.height(20.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onClick = vm::back) { Text("Back", color = GarminBlue) }
+        PrimaryButton("Continue", vm::confirmLocation, modifier = Modifier.weight(1f), enabled = state.canProceedFromLocation)
     }
 }
 
 @Composable
-private fun PasswordStep(
-    state: OnboardingUiState,
-    vm: OnboardingViewModel,
-    scope: kotlinx.coroutines.CoroutineScope,
-) {
-    Text("Create a password", style = MaterialTheme.typography.titleMedium)
-    OutlinedTextField(
-        value = state.password,
-        onValueChange = { vm.setPasswords(it, state.confirm) },
-        label = { Text("Password") },
-        singleLine = true,
-        visualTransformation = PasswordVisualTransformation(),
-        modifier = Modifier.fillMaxWidth(),
-    )
-    OutlinedTextField(
-        value = state.confirm,
-        onValueChange = { vm.setPasswords(state.password, it) },
-        label = { Text("Confirm password") },
-        singleLine = true,
-        isError = state.passwordError != null,
-        visualTransformation = PasswordVisualTransformation(),
-        modifier = Modifier.fillMaxWidth(),
-    )
-    state.passwordError?.let {
-        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+private fun PasswordStep(state: OnboardingUiState, vm: OnboardingViewModel, scope: kotlinx.coroutines.CoroutineScope) {
+    Text("Create a password", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
+    Spacer(Modifier.height(12.dp))
+    SurfaceCard {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            AppTextField(state.password, { vm.setPasswords(it, state.confirm) }, "Password", visualTransformation = PasswordVisualTransformation())
+            AppTextField(state.confirm, { vm.setPasswords(state.password, it) }, "Confirm password", isError = state.passwordError != null, visualTransformation = PasswordVisualTransformation())
+            state.passwordError?.let { Text(it, color = IssueText, style = MaterialTheme.typography.labelSmall) }
+        }
     }
-    Spacer(Modifier.height(4.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        TextButton(onClick = vm::back, enabled = !state.saving) { Text("Back") }
-        Button(
-            onClick = { scope.launch { vm.complete() } },
-            enabled = !state.saving,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Finish") }
+    Spacer(Modifier.height(20.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        TextButton(onClick = vm::back, enabled = !state.saving) { Text("Back", color = GarminBlue) }
+        PrimaryButton(if (state.saving) "Saving…" else "Finish", { scope.launch { vm.complete() } }, modifier = Modifier.weight(1f), enabled = !state.saving)
     }
 }
 
@@ -225,32 +230,38 @@ fun LoginScreen(container: AppContainer, onUnlocked: () -> Unit) {
     val vm = remember { LoginViewModel(container.credentialStore) }
     val state by vm.state.collectAsState()
 
-    LaunchedEffect(state.unlocked) {
-        if (state.unlocked) onUnlocked()
-    }
+    LaunchedEffect(state.unlocked) { if (state.unlocked) onUnlocked() }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Canvas)
+            .statusBarsPadding()
+            .imePadding()
+            .padding(horizontal = 28.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Sign in", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = state.password,
-            onValueChange = vm::onPasswordChange,
-            label = { Text("Password") },
-            singleLine = true,
-            isError = state.error != null,
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        state.error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        Surface(shape = RoundedCornerShape(28.dp), color = GarminBlue, modifier = Modifier.size(84.dp)) {
+            Box(contentAlignment = Alignment.Center) {
+                Text("TB", color = CardSurface, fontSize = 32.sp, style = MaterialTheme.typography.headlineMedium)
+            }
         }
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = vm::submit, modifier = Modifier.fillMaxWidth()) {
-            Text("Unlock")
+        Spacer(Modifier.height(20.dp))
+        Box { GarminLogo() }
+        Text("TeamB Office", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, modifier = Modifier.padding(top = 8.dp))
+        Text("Welcome back — sign in to continue.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(28.dp))
+        SurfaceCard {
+            Column {
+                AppTextField(
+                    state.password, vm::onPasswordChange, "Password",
+                    isError = state.error != null, visualTransformation = PasswordVisualTransformation(),
+                )
+                state.error?.let { Text(it, color = IssueText, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 8.dp)) }
+                Spacer(Modifier.height(16.dp))
+                PrimaryButton("Unlock", vm::submit)
+            }
         }
     }
 }

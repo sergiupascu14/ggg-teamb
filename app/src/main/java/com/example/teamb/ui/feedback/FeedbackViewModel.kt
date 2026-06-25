@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 data class FeedbackUiState(
     val form: FeedbackForm = FeedbackForm(
         category = FeedbackCategory.OTHER,
-        sentiment = FeedbackSentiment.ISSUE,
+        sentiment = FeedbackSentiment.POSITIVE,
         message = "",
     ),
     val error: String? = null,
@@ -116,7 +116,7 @@ class FeedbackViewModel(
             _state.value = FeedbackUiState(
                 form = FeedbackForm(
                     category = FeedbackCategory.OTHER,
-                    sentiment = FeedbackSentiment.ISSUE,
+                    sentiment = FeedbackSentiment.POSITIVE,
                     message = "",
                     building = form.building,
                     floor = form.floor,

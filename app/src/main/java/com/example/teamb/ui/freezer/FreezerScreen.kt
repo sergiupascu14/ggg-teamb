@@ -1,18 +1,18 @@
 package com.example.teamb.ui.freezer
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,8 +29,21 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.teamb.AppContainer
 import com.example.teamb.data.db.FreezerItemEntity
-import com.example.teamb.data.util.Dates
+import com.example.teamb.ui.components.AppTextField
+import com.example.teamb.ui.components.FieldLabel
+import com.example.teamb.ui.components.GarminHeader
+import com.example.teamb.ui.components.OutlinedPillButton
+import com.example.teamb.ui.components.PrimaryButton
+import com.example.teamb.ui.components.ScreenTitle
+import com.example.teamb.ui.components.SurfaceCard
+import com.example.teamb.ui.theme.AccentBlue
+import com.example.teamb.ui.theme.TextMuted
+import com.example.teamb.ui.theme.TextPrimary
+import com.example.teamb.ui.theme.TextSecondary
 import kotlinx.coroutines.flow.emptyFlow
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun FreezerScreen(container: AppContainer) {
@@ -52,39 +65,44 @@ fun FreezerScreen(container: AppContainer) {
     }.collectAsState(initial = emptyList())
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
     ) {
-        Text("Freezer", style = MaterialTheme.typography.headlineSmall)
+        GarminHeader()
+        Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 20.dp)) {
+            ScreenTitle("Freezer")
 
-        if (ownerId == null) {
-            Text(
-                "Sign in to use the freezer.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            return@Column
-        }
-
-        CheckInForm(onCheckIn = vm::checkIn)
-
-        if (frozenItems.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("🧊", style = MaterialTheme.typography.displaySmall)
-                Text(
-                    "Nothing in the freezer yet.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(frozenItems, key = { it.id }) { item ->
-                    FreezerRow(item = item, onCheckOut = { vm.checkOut(item.id) })
+            if (ownerId == null) {
+                Box(Modifier.padding(top = 16.dp)) {
+                    SurfaceCard {
+                        Text(
+                            "Sign in to use the freezer.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondary,
+                        )
+                    }
                 }
+                return@Column
+            }
+
+            Box(Modifier.padding(top = 16.dp)) {
+                CheckInForm(onCheckIn = vm::checkIn)
+            }
+
+            if (frozenItems.isEmpty()) {
+                Box(Modifier.padding(top = 16.dp)) {
+                    EmptyState()
+                }
+            } else {
+                FieldLabel("In the freezer", modifier = Modifier.padding(top = 20.dp, bottom = 4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    frozenItems.forEach { item ->
+                        FreezerRow(item = item, onCheckOut = { vm.checkOut(item.id) })
+                    }
+                }
+            }
+
+            Box(Modifier.padding(top = 16.dp)) {
+                StorageTipCard()
             }
         }
     }
@@ -93,23 +111,20 @@ fun FreezerScreen(container: AppContainer) {
 @Composable
 private fun CheckInForm(onCheckIn: (String) -> Unit) {
     var label by remember { mutableStateOf("") }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AppTextField(
             value = label,
             onValueChange = { label = it },
-            label = { Text("What are you freezing?") },
-            modifier = Modifier.fillMaxWidth(),
+            placeholder = "What are you freezing?",
         )
-        Button(
+        PrimaryButton(
+            text = "Check in",
             onClick = {
                 onCheckIn(label)
                 label = ""
             },
             enabled = label.isNotBlank(),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Check in")
-        }
+        )
     }
 }
 
@@ -118,20 +133,72 @@ private fun FreezerRow(
     item: FreezerItemEntity,
     onCheckOut: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    SurfaceCard {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
-                Text(item.label, style = MaterialTheme.typography.titleMedium)
+            Surface(shape = CircleShape, color = AccentBlue, modifier = Modifier.size(52.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("🥚", style = MaterialTheme.typography.titleLarge)
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 14.dp),
+            ) {
+                Text(item.label, style = MaterialTheme.typography.titleMedium, color = TextPrimary)
                 Text(
-                    "Since ${Dates.isoDate(item.checkInAt)}",
-                    style = MaterialTheme.typography.bodySmall,
+                    "Since ${sinceLabel(item.checkInAt)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted,
                 )
             }
-            OutlinedButton(onClick = onCheckOut) { Text("Check out") }
+            OutlinedPillButton(text = "Check out", onClick = onCheckOut)
         }
     }
+}
+
+@Composable
+private fun StorageTipCard() {
+    SurfaceCard {
+        Column {
+            FieldLabel("Storage tip")
+            Text(
+                "Label items before placing them in the office freezer.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyState() {
+    SurfaceCard(padding = 28) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("🧊", style = MaterialTheme.typography.displaySmall)
+            Text(
+                "Nothing in the freezer yet.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+/** Human-readable check-in date: "today" when same calendar day, else "MMM d, yyyy". */
+private fun sinceLabel(checkInAt: Long): String {
+    val now = Calendar.getInstance()
+    val then = Calendar.getInstance().apply { timeInMillis = checkInAt }
+    val sameDay = now.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
+        now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
+    return if (sameDay) "today" else SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(checkInAt)
 }

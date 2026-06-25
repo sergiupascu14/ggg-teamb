@@ -1,31 +1,27 @@
 package com.example.teamb.ui.newsfeed
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.outlined.ThumbUp
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,16 +31,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.example.teamb.AppContainer
 import com.example.teamb.data.model.Building
 import com.example.teamb.data.model.FeedbackSentiment
+import com.example.teamb.ui.components.GarminHeader
+import com.example.teamb.ui.components.ScreenTitle
+import com.example.teamb.ui.components.SurfaceCard
+import com.example.teamb.ui.components.Tag
+import com.example.teamb.ui.theme.AccentBlue
+import com.example.teamb.ui.theme.CardBorder
+import com.example.teamb.ui.theme.CardSurface
+import com.example.teamb.ui.theme.GarminBlue
+import com.example.teamb.ui.theme.IssueBg
+import com.example.teamb.ui.theme.IssueText
+import com.example.teamb.ui.theme.PositiveBg
+import com.example.teamb.ui.theme.PositiveText
+import com.example.teamb.ui.theme.TextMuted
+import com.example.teamb.ui.theme.TextPrimary
+import com.example.teamb.ui.theme.TextSecondary
+import com.example.teamb.ui.util.toDisplayName
 
 @Composable
 fun NewsfeedScreen(container: AppContainer) {
@@ -63,51 +75,58 @@ fun NewsfeedScreen(container: AppContainer) {
     val state by vm.state.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
     ) {
-        Text("Community", style = MaterialTheme.typography.headlineSmall)
+        GarminHeader()
+        Column(Modifier.padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 20.dp)) {
+            ScreenTitle("Community")
 
-        FilterBar(
-            buildings = state.buildings,
-            selectedBuildingCode = state.filter.buildingCode,
-            floorOptions = state.floorOptions,
-            selectedFloor = state.filter.floor,
-            onSelectBuilding = vm::selectBuilding,
-            onSelectFloor = vm::selectFloor,
-            onClear = vm::clearFilter,
-        )
-
-        if (state.rows.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("📭", style = MaterialTheme.typography.displaySmall)
-                Text(
-                    "No community feedback yet.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
+            Box(Modifier.padding(top = 16.dp)) {
+                FilterChips(
+                    buildings = state.buildings,
+                    selectedBuildingCode = state.filter.buildingCode,
+                    floorOptions = state.floorOptions,
+                    selectedFloor = state.filter.floor,
+                    onSelectBuilding = vm::selectBuilding,
+                    onSelectFloor = vm::selectFloor,
+                    onClear = vm::clearFilter,
                 )
             }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(state.rows, key = { it.item.id }) { row ->
-                    FeedbackCard(
-                        row = row,
-                        canVote = currentUserId != null,
-                        onVote = { vm.toggleVote(row.item.id) },
+
+            if (state.rows.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 48.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("📭", style = MaterialTheme.typography.displaySmall)
+                    Text(
+                        "No community feedback yet.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
+                }
+            } else {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    state.rows.forEach { row ->
+                        FeedbackCard(
+                            row = row,
+                            canVote = currentUserId != null,
+                            onVote = { vm.toggleVote(row.item.id) },
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FilterBar(
+private fun FilterChips(
     buildings: List<Building>,
     selectedBuildingCode: String?,
     floorOptions: List<Int>,
@@ -118,62 +137,91 @@ private fun FilterBar(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val buildingLabel =
             buildings.firstOrNull { it.code == selectedBuildingCode }?.label ?: "Building"
-        Dropdown(
+        FilterChip(
             label = buildingLabel,
-            options = buildOptions(buildings),
-            onSelect = { onSelectBuilding(it) },
-        )
+            selected = selectedBuildingCode != null,
+        ) { dismiss ->
+            DropdownMenuItem(
+                text = { Text("All buildings") },
+                onClick = { onSelectBuilding(null); dismiss() },
+            )
+            buildings.forEach { b ->
+                DropdownMenuItem(
+                    text = { Text(b.label) },
+                    onClick = { onSelectBuilding(b.code); dismiss() },
+                )
+            }
+        }
 
-        Dropdown(
+        FilterChip(
             label = selectedFloor?.let { "Floor $it" } ?: "Floor",
+            selected = selectedFloor != null,
             enabled = selectedBuildingCode != null,
-            options = buildFloorOptions(floorOptions),
-            onSelect = { onSelectFloor(it) },
-        )
+        ) { dismiss ->
+            DropdownMenuItem(
+                text = { Text("All floors") },
+                onClick = { onSelectFloor(null); dismiss() },
+            )
+            floorOptions.forEach { f ->
+                DropdownMenuItem(
+                    text = { Text("Floor $f") },
+                    onClick = { onSelectFloor(f); dismiss() },
+                )
+            }
+        }
 
         if (selectedBuildingCode != null || selectedFloor != null) {
-            TextButton(onClick = onClear) { Text("Clear") }
+            Text(
+                "Clear",
+                style = MaterialTheme.typography.labelLarge,
+                color = GarminBlue,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onClear() }
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            )
         }
     }
 }
 
-private data class Option<T>(val label: String, val value: T?)
-
-private fun buildOptions(buildings: List<Building>): List<Option<String>> =
-    listOf(Option<String>("All buildings", null)) +
-        buildings.map { Option(it.label, it.code) }
-
-private fun buildFloorOptions(floors: List<Int>): List<Option<Int>> =
-    listOf(Option<Int>("All floors", null)) + floors.map { Option("Floor $it", it) }
-
 @Composable
-private fun <T> Dropdown(
+private fun FilterChip(
     label: String,
-    options: List<Option<T>>,
+    selected: Boolean,
     enabled: Boolean = true,
-    onSelect: (T?) -> Unit,
+    menuContent: @Composable (dismiss: () -> Unit) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        OutlinedButton(onClick = { expanded = true }, enabled = enabled) {
-            Text(label)
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = if (selected) AccentBlue else CardSurface,
+            border = BorderStroke(
+                1.4.dp,
+                if (selected) GarminBlue else CardBorder,
+            ),
+            modifier = Modifier.clickable(enabled = enabled) { expanded = true },
+        ) {
+            Text(
+                label,
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                color = when {
+                    !enabled -> TextMuted
+                    selected -> GarminBlue
+                    else -> TextSecondary
+                },
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                fontSize = 14.sp,
+            )
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.label) },
-                    onClick = {
-                        onSelect(option.value)
-                        expanded = false
-                    },
-                )
-            }
+            menuContent { expanded = false }
         }
     }
 }
@@ -185,78 +233,93 @@ private fun FeedbackCard(
     onVote: () -> Unit,
 ) {
     val item = row.item
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    val positive = item.sentiment == FeedbackSentiment.POSITIVE
+    val tagBg = if (positive) PositiveBg else IssueBg
+    val tagFg = if (positive) PositiveText else IssueText
+    val sentimentWord = if (positive) "Positive" else "Issue"
+    // "Anonymous" stays as-is; real dataset names get title-cased.
+    val displayName =
+        if (row.displayName == "Anonymous") row.displayName else row.displayName.toDisplayName()
+
+    SurfaceCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(item.category.label, style = MaterialTheme.typography.titleMedium)
-                AssistChip(
-                    onClick = {},
-                    enabled = false,
-                    label = {
-                        Text(
-                            if (item.sentiment == FeedbackSentiment.POSITIVE) "👍 Positive"
-                            else "⚠️ Issue",
-                        )
-                    },
-                )
-            }
-
-            Text(item.message, style = MaterialTheme.typography.bodyMedium)
-
-            locationLabel(item.building, item.floor, item.location)?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall)
-            }
-
-            if (item.photoRef != null) {
-                AsyncImage(
-                    model = item.photoRef,
-                    contentDescription = "Feedback photo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(row.displayName, style = MaterialTheme.typography.labelMedium)
-                OutlinedButton(onClick = onVote, enabled = canVote) {
-                    Icon(
-                        imageVector = if (item.votedByMe) Icons.Filled.ThumbUp
-                        else Icons.Outlined.ThumbUp,
-                        contentDescription = "Vote",
-                        modifier = Modifier.size(18.dp),
-                    )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Tag(item.category.label, bg = tagBg, fg = tagFg)
                     Text(
-                        "  ${item.votes}",
-                        style = MaterialTheme.typography.labelLarge,
+                        sentimentWord,
+                        modifier = Modifier.padding(start = 8.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
                     )
                 }
+                Text(
+                    item.message,
+                    modifier = Modifier.padding(top = 10.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                )
+                Text(
+                    subtitle(item.building, item.floor, displayName),
+                    modifier = Modifier.padding(top = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted,
+                )
             }
+
+            VotePill(
+                votedByMe = item.votedByMe,
+                votes = item.votes,
+                enabled = canVote,
+                onVote = onVote,
+            )
         }
     }
 }
 
-private fun locationLabel(building: String?, floor: Int?, location: String?): String? {
-    val buildingLabel = building?.let { Building.fromCode(it)?.label ?: it }
-    val parts = buildList {
-        if (buildingLabel != null) add(buildingLabel)
+@Composable
+private fun VotePill(votedByMe: Boolean, votes: Int, enabled: Boolean, onVote: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = CardSurface,
+        border = BorderStroke(1.4.dp, GarminBlue),
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .clickable(enabled = enabled, onClick = onVote),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = if (votedByMe) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = "Vote",
+                tint = GarminBlue,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                "$votes",
+                modifier = Modifier.padding(start = 6.dp),
+                style = MaterialTheme.typography.labelLarge,
+                color = GarminBlue,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+/** "<building><floor> · Floor <floor> · <name>", dropping the location parts when unknown. */
+private fun subtitle(building: String?, floor: Int?, name: String): String {
+    val head = buildString {
+        if (building != null) append(building)
+        if (floor != null) append(floor)
+    }
+    return buildList {
+        if (head.isNotEmpty()) add(head)
         if (floor != null) add("Floor $floor")
-    }
-    return when {
-        parts.isNotEmpty() -> parts.joinToString(" · ")
-        else -> location
-    }
+        add(name)
+    }.joinToString(" · ")
 }
