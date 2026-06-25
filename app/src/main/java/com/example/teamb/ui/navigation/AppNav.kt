@@ -8,6 +8,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,15 @@ fun AppRoot(container: AppContainer) {
 @Composable
 private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
     val navController = rememberNavController()
+
+    // Land on Community when today's pulse is already done; otherwise nudge the user to check in.
+    var startDestination by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        val checkedIn = runCatching { container.dailyPulseRepository.checkedInToday() }.getOrDefault(false)
+        startDestination = if (checkedIn) Routes.NEWSFEED else Routes.PULSE
+    }
+    val start = startDestination ?: return
+
     Scaffold(
         containerColor = Canvas,
         bottomBar = {
@@ -81,7 +91,7 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
                         selected = selected,
                         onClick = {
                             navController.navigate(tab.route) {
-                                popUpTo(Routes.PULSE) { saveState = true }
+                                popUpTo(start) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -102,7 +112,7 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.PULSE,
+            startDestination = start,
             modifier = Modifier.padding(padding),
         ) {
             composable(Routes.PULSE) { DailyPulseScreen(container) }

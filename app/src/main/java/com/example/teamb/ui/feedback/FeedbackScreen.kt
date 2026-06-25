@@ -75,6 +75,8 @@ import com.example.teamb.ui.theme.GarminBlue
 import com.example.teamb.ui.theme.InputBorder
 import com.example.teamb.ui.theme.InputFill
 import com.example.teamb.ui.theme.IssueText
+import com.example.teamb.ui.theme.Navy
+import com.example.teamb.ui.theme.OnBrand
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.theme.TextSecondary
@@ -347,14 +349,14 @@ private fun SentimentPill(
     Surface(
         modifier = modifier.height(46.dp),
         shape = RoundedCornerShape(16.dp),
-        color = if (selected) GarminBlue else CardSurface,
+        color = if (selected) Navy else CardSurface,
         border = if (selected) null else BorderStroke(1.4.dp, InputBorder),
         onClick = onClick,
     ) {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(
                 label,
-                color = if (selected) CardSurface else TextSecondary,
+                color = if (selected) OnBrand else TextSecondary,
                 fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
                 fontSize = 14.sp,
             )
@@ -436,7 +438,7 @@ private fun ToggleRow(
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(checkedTrackColor = GarminBlue),
+                colors = SwitchDefaults.colors(checkedTrackColor = Navy),
             )
         }
     }

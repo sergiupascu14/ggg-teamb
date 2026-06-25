@@ -38,6 +38,8 @@ import com.example.teamb.ui.theme.AccentBlue
 import com.example.teamb.ui.theme.CardBorder
 import com.example.teamb.ui.theme.CardSurface
 import com.example.teamb.ui.theme.GarminBlue
+import com.example.teamb.ui.theme.Navy
+import com.example.teamb.ui.theme.OnBrand
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.util.toDisplayName
@@ -175,7 +177,7 @@ private fun PinnedYouRow() {
 private fun RankBadge(label: String) {
     Surface(
         shape = CircleShape,
-        color = GarminBlue,
+        color = Navy,
         modifier = Modifier.size(32.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -183,7 +185,7 @@ private fun RankBadge(label: String) {
                 label,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = CardSurface,
+                color = OnBrand,
             )
         }
     }

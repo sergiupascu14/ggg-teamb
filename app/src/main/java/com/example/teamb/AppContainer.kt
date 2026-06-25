@@ -5,8 +5,14 @@ import com.example.teamb.data.community.CommunityRepository
 import com.example.teamb.data.community.FirebaseCommunityRepository
 import com.example.teamb.data.datastore.CredentialStore
 import com.example.teamb.data.datastore.DataStoreProfileStore
+import com.example.teamb.data.datastore.DataStoreSettingsStore
 import com.example.teamb.data.datastore.EncryptedCredentialStore
 import com.example.teamb.data.datastore.ProfileStore
+import com.example.teamb.data.datastore.SettingsStore
+import com.example.teamb.data.sync.FirebaseFridgeRepository
+import com.example.teamb.data.sync.FirebasePulseRepository
+import com.example.teamb.data.sync.FridgeRepository
+import com.example.teamb.data.sync.PulseRepository
 import com.example.teamb.data.db.AppDatabase
 import com.example.teamb.data.desk.DeskAllocationRepository
 import com.example.teamb.data.integration.MockGarminAdDirectoryService
@@ -34,6 +40,7 @@ class AppContainer(context: Context) {
 
     val profileStore: ProfileStore by lazy { DataStoreProfileStore(appContext) }
     val credentialStore: CredentialStore by lazy { EncryptedCredentialStore(appContext) }
+    val settingsStore: SettingsStore by lazy { DataStoreSettingsStore(appContext) }
 
     val directory by lazy { MockGarminAdDirectoryService(desk) }
     val ticketRouter: TicketRouter by lazy { MockJiraTicketRouter() }
@@ -41,6 +48,12 @@ class AppContainer(context: Context) {
 
     val community: CommunityRepository by lazy {
         FirebaseCommunityRepository(FirebaseDatabase.getInstance().reference)
+    }
+    val fridgeRepository: FridgeRepository by lazy {
+        FirebaseFridgeRepository(FirebaseDatabase.getInstance().reference)
+    }
+    val pulseSyncRepository: PulseRepository by lazy {
+        FirebasePulseRepository(FirebaseDatabase.getInstance().reference)
     }
 
     val dailyPulseRepository by lazy { DailyPulseRepository(db.dailyPulseDao(), clock) }

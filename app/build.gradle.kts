@@ -109,8 +109,11 @@ private val coverageExclusions = listOf(
     // PasswordHasher (pure) stays IN scope; only the Android store impls are excluded.
     "**/data/datastore/DataStoreProfileStore*.*", "**/data/datastore/ProfileStoreKt*.*",
     "**/data/datastore/EncryptedCredentialStore*.*",
+    "**/data/datastore/DataStoreSettingsStore*.*", "**/data/datastore/SettingsStoreKt*.*",
     "**/data/db/AppDatabase*.*",
     "**/data/community/FirebaseCommunityRepository*.*",
+    "**/data/sync/FirebaseFridgeRepository*.*",
+    "**/data/sync/FirebasePulseRepository*.*",
     "**/data/desk/DeskAllocationRepository\$Companion*.*",
     "**/data/integration/MockGarminAdDirectoryService*.*",
     "**/data/integration/MlKitPhotoIssueDetector*.*",

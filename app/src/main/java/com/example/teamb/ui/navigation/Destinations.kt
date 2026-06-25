@@ -27,11 +27,11 @@ object Routes {
         if (categoryName == null) FEEDBACK else "$FEEDBACK?$FEEDBACK_ARG_CATEGORY=$categoryName"
 }
 
-/** Bottom navigation tabs. */
+/** Bottom navigation tabs. Community sits in the middle as the primary shared surface. */
 enum class Tab(val route: String, val label: String, val icon: ImageVector) {
     PULSE(Routes.PULSE, "Pulse", Icons.Filled.Favorite),
     SPACES(Routes.SPACES, "Spaces", Icons.Filled.Apartment),
-    REPORT(Routes.REPORT, "Report", Icons.AutoMirrored.Filled.Chat),
     NEWSFEED(Routes.NEWSFEED, "Community", Icons.Filled.Public),
+    REPORT(Routes.REPORT, "Report", Icons.AutoMirrored.Filled.Chat),
     PROFILE(Routes.PROFILE, "Profile", Icons.Filled.Person),
 }

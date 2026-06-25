@@ -51,6 +51,8 @@ import com.example.teamb.ui.theme.CardSurface
 import com.example.teamb.ui.theme.GarminBlue
 import com.example.teamb.ui.theme.InputBorder
 import com.example.teamb.ui.theme.IssueText
+import com.example.teamb.ui.theme.Navy
+import com.example.teamb.ui.theme.OnBrand
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.theme.TextSecondary
@@ -242,9 +244,9 @@ fun LoginScreen(container: AppContainer, onUnlocked: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Surface(shape = RoundedCornerShape(28.dp), color = GarminBlue, modifier = Modifier.size(84.dp)) {
+        Surface(shape = RoundedCornerShape(28.dp), color = Navy, modifier = Modifier.size(84.dp)) {
             Box(contentAlignment = Alignment.Center) {
-                Text("TB", color = CardSurface, fontSize = 32.sp, style = MaterialTheme.typography.headlineMedium)
+                Text("TB", color = OnBrand, fontSize = 32.sp, style = MaterialTheme.typography.headlineMedium)
             }
         }
         Spacer(Modifier.height(20.dp))
