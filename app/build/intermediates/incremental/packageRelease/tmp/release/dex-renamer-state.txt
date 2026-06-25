@@ -1,0 +1,7 @@
+#Thu Jun 25 09:40:41 EEST 2026
+base.0=/Users/pascusergiu/IdeaProjects/ggg-teamb/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
+base.1=/Users/pascusergiu/IdeaProjects/ggg-teamb/app/build/intermediates/dex/release/mergeDexRelease/classes2.dex
+path.0=classes.dex
+path.1=classes2.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex
