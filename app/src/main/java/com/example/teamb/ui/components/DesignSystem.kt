@@ -24,20 +24,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.teamb.R
 import com.example.teamb.ui.theme.AccentBlue
-import com.example.teamb.ui.theme.BrandCyan
+import com.example.teamb.ui.theme.LocalAppColors
 import com.example.teamb.ui.theme.BrandSky
 import com.example.teamb.ui.theme.CardBorder
 import com.example.teamb.ui.theme.CardSurface
@@ -55,30 +55,21 @@ import com.example.teamb.ui.theme.TextSecondary
 val BrandGradient: Brush
     get() = Brush.linearGradient(listOf(Navy, GarminBlueMid, BrandSky))
 
-/** The Garmin triangle + wordmark used in every header. The triangle carries the brand sky/cyan. */
+/**
+ * The official Garmin wordmark + triangle used in every header.
+ * On dark/branded surfaces (`onDark`, or whenever the dark theme is active) the wordmark is
+ * tinted white so it stays legible; on light surfaces the original black + blue logo is used.
+ */
 @Composable
 fun GarminLogo(onDark: Boolean = false) {
-    val color = if (onDark) OnBrand else GarminBlue
-    val accent = if (onDark) BrandSky else BrandCyan
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Canvas(modifier = Modifier.size(14.dp)) {
-            val p = Path().apply {
-                moveTo(0f, size.height)
-                lineTo(size.width / 2f, size.height * 0.18f)
-                lineTo(size.width, size.height)
-                close()
-            }
-            drawPath(p, accent)
-        }
-        Text(
-            "GARMIN",
-            modifier = Modifier.padding(start = 8.dp),
-            color = color,
-            fontWeight = FontWeight.Black,
-            fontSize = 14.sp,
-            letterSpacing = 1.6.sp,
-        )
-    }
+    val renderLight = onDark || LocalAppColors.current.isDark
+    Image(
+        painter = painterResource(R.drawable.garmin_logo),
+        contentDescription = "Garmin",
+        contentScale = ContentScale.Fit,
+        colorFilter = if (renderLight) ColorFilter.tint(OnBrand) else null,
+        modifier = Modifier.height(24.dp),
+    )
 }
 
 /** White rounded header bar with the Garmin logo (canvas background screens). */

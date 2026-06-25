@@ -1,4 +1,4 @@
-# TeamB Office
+# CLOOJ
 
 An Android app for a Garmin office that turns everyday workplace signal into action — a daily
 "pulse" check-in, a shared freezer tracker, positive **and** issue feedback with on-device AI photo

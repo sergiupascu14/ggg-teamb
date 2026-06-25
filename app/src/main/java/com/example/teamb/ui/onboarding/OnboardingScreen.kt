@@ -36,7 +36,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import com.example.teamb.AppContainer
+import com.example.teamb.R
 import com.example.teamb.data.model.Employee
 import com.example.teamb.ui.components.AppTextField
 import com.example.teamb.ui.components.FieldLabel
@@ -92,7 +97,7 @@ fun OnboardingScreen(container: AppContainer, onCompleted: () -> Unit) {
         GarminLogo()
         StepDots(stepIndex, modifier = Modifier.padding(top = 20.dp))
         Text(
-            "Welcome to TeamB Office",
+            "Welcome to CLOOJ",
             style = MaterialTheme.typography.headlineSmall,
             color = TextPrimary,
             modifier = Modifier.padding(top = 8.dp),
@@ -244,14 +249,17 @@ fun LoginScreen(container: AppContainer, onUnlocked: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Surface(shape = RoundedCornerShape(28.dp), color = Navy, modifier = Modifier.size(84.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Text("TB", color = OnBrand, fontSize = 32.sp, style = MaterialTheme.typography.headlineMedium)
-            }
-        }
+        Image(
+            painter = painterResource(R.drawable.clooj_logo),
+            contentDescription = "CLOOJ",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(84.dp)
+                .clip(RoundedCornerShape(28.dp)),
+        )
         Spacer(Modifier.height(20.dp))
         Box { GarminLogo() }
-        Text("TeamB Office", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, modifier = Modifier.padding(top = 8.dp))
+        Text("CLOOJ", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, modifier = Modifier.padding(top = 8.dp))
         Text("Welcome back — sign in to continue.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary, textAlign = TextAlign.Center)
         Spacer(Modifier.height(28.dp))
         SurfaceCard {

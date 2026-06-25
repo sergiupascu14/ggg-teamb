@@ -1,4 +1,4 @@
-# UI Design Audit — TeamB Office App
+# UI Design Audit — CLOOJ App
 
 > **RESOLVED (this iteration).** Every screen was rebuilt onto a new Garmin design system
 > (`ui/theme` + `ui/components`) matching the provided mockups (`garmin-office-collage.svg`,
@@ -67,7 +67,7 @@ A circular floating `≡` button appears in the top-left corner of these screens
 
 **Screens affected:** Onboarding steps 1, 2, 3 (and the Sign In screen when it first loads before the profile is set).
 
-The title "Welcome to TeamB Office" begins at `y=72` in pixel coords (confirmed via UIAutomator dump), which is exactly where the system status bar clock sits. The time "2:28" visibly collides with the "W" of "Welcome".
+The title "Welcome to CLOOJ" begins at `y=72` in pixel coords (confirmed via UIAutomator dump), which is exactly where the system status bar clock sits. The time "2:28" visibly collides with the "W" of "Welcome".
 
 **Root cause:** The onboarding `Column`/`Box` does not apply `Modifier.statusBarsPadding()` or consume `WindowInsets.statusBars`. The main `Scaffold` in `MainScaffold` handles insets for the logged-in flow but the onboarding composable has its own layout without insets.
 
@@ -141,7 +141,7 @@ The login screen shows "Sign in" text sitting at roughly 55% of the screen heigh
 **What to fix:**
 - Vertically centre the form block.
 - Add the app name / wordmark above the form in the top half of the screen.
-- Even a simple large icon + "TeamB Office" headline above the form would anchor the layout.
+- Even a simple large icon + "CLOOJ" headline above the form would anchor the layout.
 
 ---
 

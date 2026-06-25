@@ -37,7 +37,7 @@ object Notifier {
         if (!canPost(context)) return
         NotificationChannels.ensure(context)
         val notification = androidx.core.app.NotificationCompat.Builder(context, NotificationChannels.REMINDERS)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(text)
             .setAutoCancel(true)
