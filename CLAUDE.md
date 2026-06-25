@@ -26,9 +26,10 @@ The office desk layout lives in `docs/desk-allocation/`:
   Never commit a real (non-anonymized) `Desk_Allocation.xlsx`.
 
 Key facts to honor across the app:
-- **Desk ID format**: `{Building}{Floor}-{Zone}{Row}-{DeskNum}` (e.g. `T6-C2-01`).
+- **Desk ID format**: `{Building}{Floor}-{Zone}{Row}-{DeskNum}` (e.g. `T6-C2-01`, `R4-F6-04`).
   - Building: `T` = Tower, `R` = Riviera. Floors: Tower 3–6, Riviera 3–5.
-  - Zone: A–D. Row: 1–3. DeskNum: two digits `00`–`99`.
+  - Zone: A–H, Row: 1–7, DeskNum: 1–2 digits. (The AI guide says A–D/1–3, but the actual
+    anonymized data goes wider — `DeskId.parse` matches the data, validating floor per building.)
 - A desk ID fully encodes building, floor, zone and row — derive these from the user's desk
   area instead of asking again where possible, and use them for newsfeed building/floor filters.
 - The workbook maps **Staff ID → Name, Supervisor, Building, Floor, Desk** via the
