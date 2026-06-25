@@ -85,7 +85,7 @@ fun ProfileScreen(
 
     LaunchedEffect(staffId) {
         runCatching {
-            streak = container.dailyPulseRepository.currentStreak()
+            streak = staffId?.let { container.dailyPulseRepository.currentStreak(it) } ?: 0
             points = staffId?.let { id ->
                 container.gamificationRepository.leaderboard(id)
                     .firstOrNull { it.userId == id }

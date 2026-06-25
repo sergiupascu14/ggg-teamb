@@ -12,14 +12,14 @@ interface DailyPulseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entry: DailyPulseEntity)
 
-    @Query("SELECT * FROM daily_pulse WHERE date = :date LIMIT 1")
-    suspend fun forDate(date: String): DailyPulseEntity?
+    @Query("SELECT * FROM daily_pulse WHERE userId = :userId AND date = :date LIMIT 1")
+    suspend fun forDate(userId: String, date: String): DailyPulseEntity?
 
-    @Query("SELECT * FROM daily_pulse ORDER BY date DESC")
-    fun observeAll(): Flow<List<DailyPulseEntity>>
+    @Query("SELECT * FROM daily_pulse WHERE userId = :userId ORDER BY date DESC")
+    fun observeAll(userId: String): Flow<List<DailyPulseEntity>>
 
-    @Query("SELECT date FROM daily_pulse ORDER BY date DESC")
-    suspend fun allDates(): List<String>
+    @Query("SELECT date FROM daily_pulse WHERE userId = :userId ORDER BY date DESC")
+    suspend fun allDates(userId: String): List<String>
 }
 
 @Dao

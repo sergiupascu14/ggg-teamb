@@ -43,25 +43,30 @@ class DailyPulseViewModel(
     private var user: PulseUser? = null
     private var weekJob: Job? = null
 
-    init {
-        refresh()
-    }
-
-    /** Re-reads local check-in status + streak. */
-    fun refresh() {
-        viewModelScope.launch {
-            val checkedIn = repository.checkedInToday()
-            val streak = repository.currentStreak()
-            _state.update { it.copy(loading = false, checkedInToday = checkedIn, streak = streak) }
-        }
-    }
-
-    /** Supplies the signed-in user's identity/location and starts observing the weekly pulse. */
+    /**
+     * Supplies the signed-in user and (re)loads their check-in status, streak and the weekly
+     * pulse. Check-ins are per user, so switching users reloads everything for that user.
+     */
     fun configure(userId: String?, building: String?, floor: Int?) {
         val next = PulseUser(userId, building, floor)
         if (user == next && weekJob != null) return
         user = next
+        loadLocal()
         observeWeek()
+    }
+
+    /** Re-reads this user's local check-in status + streak. */
+    private fun loadLocal() {
+        val uid = user?.userId
+        viewModelScope.launch {
+            if (uid == null) {
+                _state.update { it.copy(loading = false, checkedInToday = false, streak = 0) }
+                return@launch
+            }
+            val checkedIn = repository.checkedInToday(uid)
+            val streak = repository.currentStreak(uid)
+            _state.update { it.copy(loading = false, checkedInToday = checkedIn, streak = streak) }
+        }
     }
 
     private fun observeWeek() {
@@ -76,21 +81,23 @@ class DailyPulseViewModel(
         }
     }
 
-    /** Submits today's mood (1..5) + optional note locally, then mirrors it to the shared store. */
+    /**
+     * Submits today's mood (1..5) + optional note for the current user, then mirrors it to the
+     * shared store. Ignored if already submitting, already checked in today, or no user is set —
+     * a user may only check in once per day.
+     */
     fun submit(mood: Int, note: String?) {
-        if (_state.value.submitting) return
+        val uid = user?.userId
+        if (_state.value.submitting || _state.value.checkedInToday || uid == null) return
         _state.update { it.copy(submitting = true) }
         viewModelScope.launch {
-            repository.submit(mood, note)
             val now = clock.nowMillis()
-            val u = user
-            if (u?.userId != null) {
-                pulseSync.submit(
-                    PulseRecord(u.userId, Dates.isoDate(now), mood.coerceIn(1, 5), u.building, u.floor),
-                    now,
-                )
-            }
-            val streak = repository.currentStreak()
+            repository.submit(uid, mood, note)
+            pulseSync.submit(
+                PulseRecord(uid, Dates.isoDate(now), mood.coerceIn(1, 5), user?.building, user?.floor),
+                now,
+            )
+            val streak = repository.currentStreak(uid)
             _state.update { it.copy(submitting = false, checkedInToday = true, streak = streak) }
         }
     }

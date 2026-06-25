@@ -3,9 +3,10 @@ package com.example.teamb.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "daily_pulse")
+@Entity(tableName = "daily_pulse", primaryKeys = ["userId", "date"])
 data class DailyPulseEntity(
-    @PrimaryKey val date: String, // ISO yyyy-MM-dd, one per day
+    val userId: String,           // Staff ID — check-ins are per user, one per day
+    val date: String,             // ISO yyyy-MM-dd
     val mood: Int,                // 1..5
     val note: String?,
     val createdAt: Long,

@@ -33,8 +33,9 @@ class DailyPulseViewModelTest {
     ) = DailyPulseViewModel(DailyPulseRepository(dao, FakeClock(now)), pulse, FakeClock(now))
 
     @Test
-    fun initial_refresh_reflects_not_checked_in() = runTest {
+    fun configure_reflects_not_checked_in_for_fresh_user() = runTest {
         val vm = vm()
+        vm.configure(userId = "me", building = "T", floor = 4)
         advanceUntilIdle()
 
         val s = vm.state.value
@@ -46,6 +47,7 @@ class DailyPulseViewModelTest {
     @Test
     fun submit_marks_checked_in_and_updates_streak() = runTest {
         val vm = vm()
+        vm.configure(userId = "me", building = "T", floor = 4)
         advanceUntilIdle()
 
         vm.submit(mood = 4, note = "fine")
@@ -55,6 +57,38 @@ class DailyPulseViewModelTest {
         assertTrue(s.checkedInToday)
         assertFalse(s.submitting)
         assertEquals(1, s.streak)
+    }
+
+    @Test
+    fun submit_is_ignored_when_already_checked_in() = runTest {
+        val pulse = InMemoryPulseRepository()
+        val vm = vm(pulse = pulse)
+        vm.configure(userId = "me", building = "T", floor = 4)
+        advanceUntilIdle()
+
+        vm.submit(mood = 4, note = null)
+        advanceUntilIdle()
+        // A second attempt must not overwrite the day's check-in.
+        vm.submit(mood = 1, note = "changed my mind")
+        advanceUntilIdle()
+
+        val records = pulse.observeWeek(Dates.currentWeekDates(now)).first()
+        assertEquals(1, records.size)
+        assertEquals(4, records.first().mood) // still the first submission
+    }
+
+    @Test
+    fun submit_is_ignored_without_a_user() = runTest {
+        val pulse = InMemoryPulseRepository()
+        val vm = vm(pulse = pulse)
+        vm.configure(userId = null, building = null, floor = null)
+        advanceUntilIdle()
+
+        vm.submit(mood = 5, note = null)
+        advanceUntilIdle()
+
+        assertFalse(vm.state.value.checkedInToday)
+        assertTrue(pulse.observeWeek(Dates.currentWeekDates(now)).first().isEmpty())
     }
 
     @Test
@@ -85,12 +119,10 @@ class DailyPulseViewModelTest {
         vm.submit(mood = 5, note = null)
         advanceUntilIdle()
 
-        // Written to the shared store...
         val records = pulse.observeWeek(Dates.currentWeekDates(now)).first()
         assertEquals(1, records.size)
         assertEquals("me", records.first().userId)
         assertEquals(5, records.first().mood)
-        // ...and reflected in the viewer's weekly "you" average.
         assertEquals(5.0, vm.state.value.weekly.youAverage!!, 0.001)
     }
 }

@@ -7,14 +7,16 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.example.teamb.TeamBApp
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
-/** Posts a Daily Pulse reminder only if the user has not checked in today. */
+/** Posts a Daily Pulse reminder only if the signed-in user has not checked in today. */
 class DailyPulseReminderWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val container = (applicationContext as TeamBApp).container
-        if (!container.dailyPulseRepository.checkedInToday()) {
+        val userId = container.profileStore.profile.first()?.staffId ?: return Result.success()
+        if (!container.dailyPulseRepository.checkedInToday(userId)) {
             Notifier.show(applicationContext, 1001, "Daily Pulse", "How is the office today? Tap to check in.")
         }
         return Result.success()

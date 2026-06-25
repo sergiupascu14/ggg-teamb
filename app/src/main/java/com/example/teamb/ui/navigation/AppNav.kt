@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -39,6 +40,7 @@ import com.example.teamb.ui.theme.CardSurface
 import com.example.teamb.ui.theme.GarminBlue
 import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.tickets.TicketsScreen
+import kotlinx.coroutines.launch
 
 /**
  * Root composable. Decides between onboarding, password login and the main app, then hosts the
@@ -48,6 +50,17 @@ import com.example.teamb.ui.tickets.TicketsScreen
 fun AppRoot(container: AppContainer) {
     val profile by container.profileStore.profile.collectAsState(initial = null)
     var unlocked by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Fully sign out: drop the local identity + password so the app returns to onboarding,
+    // not just the password lock. Clearing the profile re-routes AppRoot to OnboardingScreen.
+    fun signOut() {
+        scope.launch {
+            unlocked = false
+            container.credentialStore.clear()
+            container.profileStore.clear()
+        }
+    }
 
     val currentProfile = profile
     when {
@@ -57,18 +70,20 @@ fun AppRoot(container: AppContainer) {
         container.credentialStore.hasPassword() && !unlocked ->
             LoginScreen(container, onUnlocked = { unlocked = true })
 
-        else -> MainScaffold(container, onSignOut = { unlocked = false })
+        else -> MainScaffold(container, onSignOut = ::signOut)
     }
 }
 
 @Composable
 private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
     val navController = rememberNavController()
+    val profile by container.profileStore.profile.collectAsState(initial = null)
 
-    // Land on Community when today's pulse is already done; otherwise nudge the user to check in.
+    // Land on Community when THIS user's pulse is already done today; otherwise nudge them to check in.
     var startDestination by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(Unit) {
-        val checkedIn = runCatching { container.dailyPulseRepository.checkedInToday() }.getOrDefault(false)
+    LaunchedEffect(profile?.staffId) {
+        val uid = profile?.staffId ?: return@LaunchedEffect // wait for the profile to load
+        val checkedIn = runCatching { container.dailyPulseRepository.checkedInToday(uid) }.getOrDefault(false)
         startDestination = if (checkedIn) Routes.NEWSFEED else Routes.PULSE
     }
     val start = startDestination ?: return

@@ -32,19 +32,20 @@ class DailyPulseRepository(
     private val dao: DailyPulseDao,
     private val clock: Clock,
 ) {
-    fun observeEntries(): Flow<List<DailyPulseEntity>> = dao.observeAll()
+    fun observeEntries(userId: String): Flow<List<DailyPulseEntity>> = dao.observeAll(userId)
 
-    suspend fun checkedInToday(): Boolean =
-        dao.forDate(Dates.isoDate(clock.nowMillis())) != null
+    suspend fun checkedInToday(userId: String): Boolean =
+        dao.forDate(userId, Dates.isoDate(clock.nowMillis())) != null
 
-    suspend fun submit(mood: Int, note: String?) {
+    /** Persists today's check-in for [userId]. No-op visible state if already checked in (REPLACE). */
+    suspend fun submit(userId: String, mood: Int, note: String?) {
         val now = clock.nowMillis()
-        dao.upsert(DailyPulseEntity(Dates.isoDate(now), mood.coerceIn(1, 5), note?.takeIf { it.isNotBlank() }, now))
+        dao.upsert(DailyPulseEntity(userId, Dates.isoDate(now), mood.coerceIn(1, 5), note?.takeIf { it.isNotBlank() }, now))
     }
 
-    suspend fun currentStreak(): Int {
+    suspend fun currentStreak(userId: String): Int {
         val today = Dates.epochDay(clock.nowMillis())
-        val days = dao.allDates().mapNotNull { runCatching { isoToEpochDay(it) }.getOrNull() }.toSet()
+        val days = dao.allDates(userId).mapNotNull { runCatching { isoToEpochDay(it) }.getOrNull() }.toSet()
         return StreakCalculator.currentStreak(days, today)
     }
 
