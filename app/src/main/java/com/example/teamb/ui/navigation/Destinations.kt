@@ -1,29 +1,37 @@
 package com.example.teamb.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Forum
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Kitchen
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Apartment
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /** All navigable routes in the signed-in app. */
 object Routes {
     const val PULSE = "pulse"
-    const val FREEZER = "freezer"
+    const val SPACES = "spaces"
+    const val KITCHEN = "kitchen"
+    const val REPORT = "report"
     const val FEEDBACK = "feedback"
     const val NEWSFEED = "newsfeed"
     const val PROFILE = "profile"
     const val TICKETS = "tickets"
     const val LEADERBOARD = "leaderboard"
+
+    /** Feedback form deep link carrying an optional preselected category name. */
+    const val FEEDBACK_ARG_CATEGORY = "category"
+    const val FEEDBACK_WITH_ARG = "$FEEDBACK?$FEEDBACK_ARG_CATEGORY={$FEEDBACK_ARG_CATEGORY}"
+    fun feedback(categoryName: String? = null): String =
+        if (categoryName == null) FEEDBACK else "$FEEDBACK?$FEEDBACK_ARG_CATEGORY=$categoryName"
 }
 
 /** Bottom navigation tabs. */
 enum class Tab(val route: String, val label: String, val icon: ImageVector) {
-    PULSE(Routes.PULSE, "Pulse", Icons.Filled.Home),
-    FREEZER(Routes.FREEZER, "Freezer", Icons.Filled.Kitchen),
-    FEEDBACK(Routes.FEEDBACK, "Feedback", Icons.Filled.Feedback),
-    NEWSFEED(Routes.NEWSFEED, "Community", Icons.Filled.Forum),
+    PULSE(Routes.PULSE, "Pulse", Icons.Filled.Favorite),
+    SPACES(Routes.SPACES, "Spaces", Icons.Filled.Apartment),
+    REPORT(Routes.REPORT, "Report", Icons.AutoMirrored.Filled.Chat),
+    NEWSFEED(Routes.NEWSFEED, "Community", Icons.Filled.Public),
     PROFILE(Routes.PROFILE, "Profile", Icons.Filled.Person),
 }

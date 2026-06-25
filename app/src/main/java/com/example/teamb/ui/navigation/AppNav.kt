@@ -15,14 +15,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.teamb.AppContainer
 import com.example.teamb.ui.dailypulse.DailyPulseScreen
 import com.example.teamb.ui.feedback.FeedbackScreen
-import com.example.teamb.ui.freezer.FreezerScreen
+import com.example.teamb.ui.report.ReportCategoryScreen
+import com.example.teamb.ui.spaces.KitchenDetailScreen
+import com.example.teamb.ui.spaces.SpacesScreen
 import com.example.teamb.ui.leaderboard.LeaderboardScreen
 import com.example.teamb.ui.newsfeed.NewsfeedScreen
 import com.example.teamb.ui.onboarding.LoginScreen
@@ -66,7 +70,13 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
             val currentDest = backStackEntry?.destination
             NavigationBar(containerColor = CardSurface) {
                 Tab.entries.forEach { tab ->
-                    val selected = currentDest?.hierarchy?.any { it.route == tab.route } == true
+                    val routes = currentDest?.hierarchy?.mapNotNull { it.route }?.toSet().orEmpty()
+                    val selected = when (tab) {
+                        // Child flows keep their parent tab highlighted.
+                        Tab.SPACES -> routes.any { it == Routes.SPACES || it == Routes.KITCHEN }
+                        Tab.REPORT -> routes.any { it == Routes.REPORT || it.startsWith(Routes.FEEDBACK) }
+                        else -> tab.route in routes
+                    }
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
@@ -96,8 +106,38 @@ private fun MainScaffold(container: AppContainer, onSignOut: () -> Unit) {
             modifier = Modifier.padding(padding),
         ) {
             composable(Routes.PULSE) { DailyPulseScreen(container) }
-            composable(Routes.FREEZER) { FreezerScreen(container) }
-            composable(Routes.FEEDBACK) { FeedbackScreen(container) }
+            composable(Routes.SPACES) {
+                SpacesScreen(
+                    container,
+                    onOpenKitchen = { navController.navigate(Routes.KITCHEN) },
+                )
+            }
+            composable(Routes.KITCHEN) {
+                KitchenDetailScreen(
+                    container,
+                    onReport = { navController.navigate(Routes.feedback(it)) },
+                )
+            }
+            composable(Routes.REPORT) {
+                ReportCategoryScreen(
+                    onContinue = { navController.navigate(Routes.feedback(it)) },
+                )
+            }
+            composable(
+                Routes.FEEDBACK_WITH_ARG,
+                arguments = listOf(
+                    navArgument(Routes.FEEDBACK_ARG_CATEGORY) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entry ->
+                FeedbackScreen(
+                    container,
+                    initialCategoryName = entry.arguments?.getString(Routes.FEEDBACK_ARG_CATEGORY),
+                )
+            }
             composable(Routes.NEWSFEED) { NewsfeedScreen(container) }
             composable(Routes.PROFILE) {
                 ProfileScreen(
