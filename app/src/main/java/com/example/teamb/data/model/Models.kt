@@ -120,6 +120,8 @@ data class Reward(
     val title: String,
     val threshold: Int,
     val unlocked: Boolean,
+    val progress: String,
+    val hint: String,
 )
 
 enum class PhotoAnalysisFailure {

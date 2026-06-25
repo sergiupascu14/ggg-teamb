@@ -149,4 +149,55 @@ class GamificationRepositoryTest {
             assertEquals(3, rewards.size)
         }
     }
+
+    @Test
+    fun rewardsFor_includes_description_for_all_rewards() {
+        val gam = repo()
+        val rewards = gam.rewardsFor(0)
+
+        // All locked rewards show "x/y feedbacks" format
+        rewards.forEach { reward ->
+            assertTrue("progress should contain 'feedbacks' for ${reward.id}", reward.progress.contains("feedbacks"))
+        }
+    }
+
+    @Test
+    fun rewardsFor_shows_progress_fraction_for_locked_rewards() {
+        val gam = repo()
+        val rewards = gam.rewardsFor(7)
+
+        assertEquals("7/10 feedbacks", rewards.first { it.id == "first-steps" }.progress)
+        assertEquals("7/50 feedbacks", rewards.first { it.id == "regular" }.progress)
+        assertEquals("7/100 feedbacks", rewards.first { it.id == "champion" }.progress)
+    }
+
+    @Test
+    fun rewardsFor_shows_unlocked_label_for_earned_rewards() {
+        val gam = repo()
+        val rewards = gam.rewardsFor(50)
+
+        assertEquals("✓ Unlocked", rewards.first { it.id == "first-steps" }.progress)
+        assertEquals("✓ Unlocked", rewards.first { it.id == "regular" }.progress)
+        assertEquals("50/100 feedbacks", rewards.first { it.id == "champion" }.progress)
+    }
+
+    @Test
+    fun rewardsFor_hint_for_locked_rewards() {
+        val gam = repo()
+        val rewards = gam.rewardsFor(5)
+
+        assertEquals("Submit 10 public feedbacks to unlock", rewards.first { it.id == "first-steps" }.hint)
+        assertEquals("Submit 50 public feedbacks to unlock", rewards.first { it.id == "regular" }.hint)
+        assertEquals("Submit 100 public feedbacks to unlock", rewards.first { it.id == "champion" }.hint)
+    }
+
+    @Test
+    fun rewardsFor_hint_for_unlocked_rewards() {
+        val gam = repo()
+        val rewards = gam.rewardsFor(100)
+
+        assertEquals("Earned! You reached 10 feedbacks", rewards.first { it.id == "first-steps" }.hint)
+        assertEquals("Earned! You reached 50 feedbacks", rewards.first { it.id == "regular" }.hint)
+        assertEquals("Earned! You reached 100 feedbacks", rewards.first { it.id == "champion" }.hint)
+    }
 }

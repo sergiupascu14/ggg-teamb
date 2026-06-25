@@ -221,15 +221,30 @@ class GamificationRepository(
         }
     }
 
-    fun rewardsFor(points: Int): List<Reward> = REWARD_TIERS.map { (id, title, threshold) ->
-        Reward(id, title, threshold, unlocked = points >= threshold)
+    fun rewardsFor(points: Int): List<Reward> = REWARD_TIERS.map { tier ->
+        val unlocked = points >= tier.threshold
+        Reward(
+            id = tier.id,
+            title = tier.title,
+            threshold = tier.threshold,
+            unlocked = unlocked,
+            progress = if (unlocked) "✓ Unlocked" else "$points/${tier.threshold} feedbacks",
+            hint = if (unlocked) "Earned! You reached ${tier.threshold} feedbacks"
+                   else "Submit ${tier.threshold} public feedbacks to unlock",
+        )
     }
+
+    private data class RewardTier(
+        val id: String,
+        val title: String,
+        val threshold: Int,
+    )
 
     private companion object {
         val REWARD_TIERS = listOf(
-            Triple("first-steps", "First Steps", 10),
-            Triple("regular", "Office Regular", 50),
-            Triple("champion", "Office Champion", 100),
+            RewardTier("first-steps", "First Steps", 10),
+            RewardTier("regular", "Office Regular", 50),
+            RewardTier("champion", "Office Champion", 100),
         )
     }
 }

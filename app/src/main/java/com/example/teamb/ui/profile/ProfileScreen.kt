@@ -14,6 +14,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,9 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.example.teamb.AppContainer
 import com.example.teamb.data.model.Building
 import com.example.teamb.data.model.Reward
@@ -244,27 +251,75 @@ private fun StreakCard(streak: Int) {
 
 @Composable
 private fun RewardCard(reward: Reward, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = CardSurface,
-        border = BorderStroke(1.dp, CardBorder),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+    var showHint by remember { mutableStateOf(false) }
+
+    if (showHint) {
+        LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(1000L)
+            showHint = false
+        }
+    }
+
+    Box(modifier = modifier) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            color = CardSurface,
+            border = BorderStroke(1.dp, CardBorder),
         ) {
-            Text(
-                if (reward.unlocked) "🏅" else "🔒",
-                style = MaterialTheme.typography.titleMedium,
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    if (reward.unlocked) "🏅" else "🔒",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    reward.title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    reward.progress,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (reward.unlocked) MaterialTheme.colorScheme.primary else TextMuted,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+
+        IconButton(
+            onClick = { showHint = true },
+            modifier = Modifier.align(Alignment.TopEnd).size(24.dp),
+        ) {
+            Icon(
+                Icons.Outlined.Info,
+                contentDescription = "Reward info",
+                modifier = Modifier.size(14.dp),
+                tint = TextMuted,
             )
-            Text(
-                reward.title,
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted,
-                textAlign = TextAlign.Center,
-            )
+        }
+
+        if (showHint) {
+            Popup(
+                alignment = Alignment.TopCenter,
+                properties = PopupProperties(focusable = false),
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFF323232),
+                ) {
+                    Text(
+                        reward.hint,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                    )
+                }
+            }
         }
     }
 }
