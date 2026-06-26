@@ -136,4 +136,5 @@ Use `/opsx:*` skills to propose/apply/archive changes.
 ## ADB device (emulator)
 - Device: `emulator-5554`
 - Screen: 1280×2856 px, 480 dpi
-- Bottom nav tap coordinates (y≈2700): Pulse x=128, Spaces x=384, Hub x=640, Report x=896, Profile x=1152
+- Bottom nav tap coordinates (y=2664): Pulse x=118, Spaces x=378, Hub x=640, Report x=900, Profile x=1162
+- Content area cards start at ~y=566 (first card), not y=1100+ — use `uiautomator dump` to find exact element bounds when tapping

@@ -55,7 +55,14 @@ office. Brand: Garmin. Package `com.example.teamb`.
 - Pulse seeded for demo via REST `PATCH` (multi-path, merges): see throwaway script logic that maps real staff IDs→their building/floor and writes moods for a date range. The graph is data-only for the rolling 7-day window — re-seed when the week moves.
 - Models: `FridgeOccupancy`, `PulseRecord`, `WeeklyPulse`/`WeeklyPulsePoint`, `ThemeMode`. `Dates`: `isoDate`, `epochDay`, `currentWeekDates`, `currentWeekToDate`, `lastSevenDays`, `weekdayInitial`.
 
+## ADB / emulator tips
+- Device: `emulator-5554`. **A physical device (RZCX51LJTNP) is also connected** — always pass `-s emulator-5554` to every `adb` command.
+- Screen: 1280×2856 px @ 480 dpi. Bottom nav bounds (actual): Pulse x=118 y=2664, Spaces x=378, Hub x=640, Report x=900, Profile x=1162.
+- Content cards start at ~y=566 (first card center ~y=698). **Do not guess y-coords from image proportions** — use `adb -s emulator-5554 shell uiautomator dump` to get exact element bounds.
+- Screenshots: `adb -s emulator-5554 shell screencap -p /sdcard/screen.png && adb -s emulator-5554 pull /sdcard/screen.png /tmp/screen.png`. Resize with `sips -Z 400` before reading images (raw 1280×2856 exceeds API limits).
+- Disable stylus promo once per session: `adb -s emulator-5554 shell settings put secure stylus_handwriting_enabled 0`.
+
 ## Git / state
-- Remote `origin git@github.com:sergiupascu14/ggg-teamb.git`. **`main` is the integration branch and is current** (latest `03255f9`, "rolling last-7-days graph"). All session work (CLOOJ redesign, Firebase fridge+pulse sync, dark mode, nav reorder + Community landing, per-user check-in fix, full sign-out) is merged into `main`.
+- Remote `origin git@github.com:sergiupascu14/ggg-teamb.git`. **`main` is the integration branch and is current**. All session work (CLOOJ redesign, Firebase fridge+pulse sync, dark mode, nav reorder + Hub landing, per-user check-in fix, full sign-out) is merged into `main`.
 - OpenSpec plans in `openspec/changes/` (validate with `openspec validate "<change>"`).
 - Status: builds clean (JDK 21), unit tests pass, **90% JaCoCo gate green**, Firebase live, verified on `emulator-5554` (incl. dark mode).

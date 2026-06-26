@@ -7,13 +7,21 @@ Built with Kotlin + Jetpack Compose + Material 3.
 
 ## Screenshots
 
-| Daily Pulse | Spaces | Kitchen |
+| Onboarding | Your desk | Daily Pulse |
 |---|---|---|
-| ![Daily Pulse](docs/screenshots/pulse.png) | ![Spaces](docs/screenshots/spaces.png) | ![Kitchen](docs/screenshots/kitchen.png) |
+| ![Onboarding](docs/screenshots/onboarding.png) | ![Your desk](docs/screenshots/onboarding_desk.png) | ![Daily Pulse](docs/screenshots/pulse.png) |
 
-| Report | Community | Profile |
+| Hub | Spaces | Kitchen |
 |---|---|---|
-| ![Report](docs/screenshots/report.png) | ![Community](docs/screenshots/community.png) | ![Profile](docs/screenshots/profile.png) |
+| ![Hub](docs/screenshots/community.png) | ![Spaces](docs/screenshots/spaces.png) | ![Kitchen](docs/screenshots/kitchen.png) |
+
+| Report | Feedback | Profile |
+|---|---|---|
+| ![Report](docs/screenshots/report.png) | ![Feedback](docs/screenshots/feedback.png) | ![Profile](docs/screenshots/profile.png) |
+
+| Leaderboard | My Tickets | |
+|---|---|---|
+| ![Leaderboard](docs/screenshots/leaderboard.png) | ![My Tickets](docs/screenshots/tickets.png) | |
 
 ## Features
 
@@ -26,7 +34,7 @@ Built with Kotlin + Jetpack Compose + Material 3.
 - **Report & Feedback** — positive or issue feedback with categories, photos, and **on-device AI photo
   categorization** (ML Kit); anonymous or public; optional facilities ticket (mock Jira / email) —
   positive feedback never raises one. Submitting returns you instantly with a confirmation toast.
-- **Community newsfeed** — shared feedback with voting, Building/Floor filters, and **attached photos**
+- **Hub (community newsfeed)** — shared feedback with voting, Building/Floor filters, and **attached photos**
   shown inline with a **full-screen viewer**.
 - **Profile & Gamification** — streaks, rewards, a leaderboard ("Office Champion"), and a
   light/dark/system appearance toggle. Skeleton loaders keep cloud-backed screens responsive.

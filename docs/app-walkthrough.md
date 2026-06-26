@@ -12,11 +12,15 @@ kitchen, raise positive or issue feedback (with photos and on-device AI categori
 the office is saying — all while **personal identities stay on the device** and only anonymized,
 content-only records reach the cloud.
 
-**Five tabs:** Pulse · Spaces · **Community** (center) · Report · Profile.
+**Five tabs:** Pulse · Spaces · **Hub** (center) · Report · Profile.
 
 ---
 
 ## 1. Getting in — onboarding & auto-login
+
+| Step 1 — Who are you? | Step 2 — Your desk | Step 3 — Password |
+|---|---|---|
+| ![Onboarding step 1](screenshots/onboarding.png) | ![Onboarding step 2](screenshots/onboarding_desk.png) | |
 
 1. **Who are you?** Search the office directory and pick yourself.
 2. **Your desk** is auto-detected from the desk-allocation dataset (building, floor, zone) — no manual
@@ -53,7 +57,9 @@ feeling responsive.
 
 ## 4. Report & Feedback
 
-![Report](screenshots/report.png)
+| Category picker | Feedback form |
+|---|---|
+| ![Report](screenshots/report.png) | ![Feedback](screenshots/feedback.png) |
 
 Reporting starts from a **category grid** or one-tap **quick chips** (Too noisy / Too hot / No rooms)
 that pre-fill the form. The feedback form supports:
@@ -68,9 +74,9 @@ that pre-fill the form. The feedback form supports:
 After submitting, a confirmation toast appears and the form **returns you instantly** to where you came
 from.
 
-## 5. Community
+## 5. Hub
 
-![Community](screenshots/community.png)
+![Hub](screenshots/community.png)
 
 The shared newsfeed — "What's happening around CLOOJ." Browse posts (newest first), **vote** with the
 heart, and **filter by Building / Floor** using clear dropdown chips (Floor stays disabled until you
@@ -79,12 +85,15 @@ Names are resolved **locally** from the bundled directory — anonymous posts si
 
 ## 6. Profile & Gamification
 
-![Profile](screenshots/profile.png)
+| Profile | Leaderboard | My Tickets |
+|---|---|---|
+| ![Profile](screenshots/profile.png) | ![Leaderboard](screenshots/leaderboard.png) | ![My Tickets](screenshots/tickets.png) |
 
 Your workplace card (desk, building, floor, supervisor), **Daily Pulse streak**, and **Rewards**
 (First Steps → Office Regular → Office Champion). An **Appearance** toggle switches Light / Dark /
-System, and the **Leaderboard** ranks contributors by **public** feedback, crowning an **Office
-Champion 👑** (anonymous posts don't count). Sign out lives here too.
+System. The **Leaderboard** ranks contributors by **public** feedback, crowning an **Office
+Champion 👑** (anonymous posts don't count). **My Tickets** tracks submitted issue requests. Sign
+out lives here too.
 
 ---
 

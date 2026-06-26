@@ -68,18 +68,18 @@ Priority: **P1** = critical path / must pass before release, **P2** = important,
 | TC-FB-09 | Instant return after submit | P1 | On the form | Submit any feedback | A confirmation toast appears and the form **returns to the previous screen immediately** (no delay) |
 | TC-FB-10 | Positive feedback never tickets | P2 | On the form | Select Positive, enable Create a ticket, submit | Result indicates the ticket was suppressed; no ticket created |
 
-## 6. Community newsfeed
+## 6. Hub (community newsfeed)
 
 | ID | Title | Pri | Preconditions | Steps | Expected result |
 |----|-------|-----|---------------|-------|-----------------|
-| TC-COM-01 | Skeleton while loading | P2 | Open Community on a cold/slow network | Open the Community tab | Shimmer card skeletons show, then real posts load |
-| TC-COM-02 | Shared feedback appears | P1 | A community post was submitted | Open Community | The post is listed with category, sentiment, message, location and submitter name |
+| TC-COM-01 | Skeleton while loading | P2 | Open Hub on a cold/slow network | Open the Hub tab | Shimmer card skeletons show, then real posts load |
+| TC-COM-02 | Shared feedback appears | P1 | A community post was submitted | Open Hub | The post is listed with category, sentiment, message, location and submitter name |
 | TC-COM-03 | Name resolved locally | P1 | A non-anonymous post exists | View the post subtitle | Shows the submitter's real name (resolved on-device), never an email/ID |
 | TC-COM-04 | Vote toggle | P1 | Signed in | Tap the heart/vote pill on a post | Vote count increments and the heart fills; tapping again removes the vote |
 | TC-COM-05 | Building filter | P2 | Posts from multiple buildings | Tap **Building** → choose one | Only posts for that building remain; chip turns blue with a ✓ in the menu |
 | TC-COM-06 | Floor disabled until building chosen | P1 | No building selected | Observe the **Floor** chip | Floor is **visibly greyed/faded and not tappable**; it enables only after a building is picked |
 | TC-COM-07 | Floor filter | P2 | Building selected | Tap **Floor** → choose one | List narrows to that floor; **Clear** resets both filters |
-| TC-COM-08 | Dropdown affordance | P3 | On Community | Observe the filter chips | Each chip shows a **▾ chevron** that rotates up when its menu opens |
+| TC-COM-08 | Dropdown affordance | P3 | On Hub | Observe the filter chips | Each chip shows a **▾ chevron** that rotates up when its menu opens |
 | TC-COM-09 | Photo appears inline | P1 | A post with a photo exists | View that post | The attached photo renders inside the card |
 | TC-COM-10 | Full-screen photo | P1 | A post with a photo exists | Tap the photo | It opens **full-screen** on a black backdrop; tapping again dismisses it |
 

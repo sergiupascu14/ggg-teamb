@@ -30,7 +30,7 @@ ML Kit, photo encoder, notifications). ViewModels, repositories and pure logic a
 - **Report & Feedback** — positive/issue feedback, categories, on-device AI photo categorization,
   anonymous/public, facilities ticketing (mock Jira / email; positive never tickets). Submitting shows
   a confirmation toast and **returns instantly**.
-- **Community newsfeed** — shared feedback with voting, **redesigned Building/Floor filter dropdowns**
+- **Hub (community newsfeed)** — shared feedback with voting, **redesigned Building/Floor filter dropdowns**
   (chevron affordance; Floor disabled until a Building is picked), **inline photos** with a
   **full-screen viewer**, and skeleton loaders.
 - **Profile & Gamification** — streaks, rewards, leaderboard ("Office Champion"), and a light/dark/
