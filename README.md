@@ -1,6 +1,6 @@
-# CLOOJ
+# CLOOJ — Cluj Location Office Optimization Journey
 
-A workplace-feedback Android app for the Garmin **Cluj ("CLOOJ")** office: a daily mood "pulse",
+A workplace-feedback Android app for the Garmin **Cluj** office: a daily mood "pulse",
 shared kitchen/fridge tracking, positive **and** issue feedback with on-device AI photo
 categorization, facilities ticketing, and a community newsfeed with photos and voting.
 Built with Kotlin + Jetpack Compose + Material 3.
