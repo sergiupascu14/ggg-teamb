@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +91,7 @@ fun OnboardingScreen(container: AppContainer, onCompleted: () -> Unit) {
             .fillMaxSize()
             .background(Canvas)
             .statusBarsPadding()
+            .navigationBarsPadding()
             .imePadding()
             .padding(horizontal = 24.dp)
             .padding(top = 20.dp, bottom = 20.dp),
@@ -244,6 +246,7 @@ fun LoginScreen(container: AppContainer, onUnlocked: () -> Unit) {
             .fillMaxSize()
             .background(Canvas)
             .statusBarsPadding()
+            .navigationBarsPadding()
             .imePadding()
             .padding(horizontal = 28.dp),
         verticalArrangement = Arrangement.Center,
