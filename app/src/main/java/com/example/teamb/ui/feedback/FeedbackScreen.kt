@@ -454,7 +454,12 @@ private fun ToggleRow(
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(checkedTrackColor = Navy),
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = Navy,
+                    uncheckedTrackColor = InputFill,
+                    uncheckedBorderColor = TextMuted,
+                    uncheckedThumbColor = TextMuted,
+                ),
             )
         }
     }

@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +47,7 @@ import com.example.teamb.ui.components.AppTextField
 import com.example.teamb.ui.components.FieldLabel
 import com.example.teamb.ui.components.GarminLogo
 import com.example.teamb.ui.components.OutlinedPillButton
+import com.example.teamb.ui.components.PasswordTextField
 import com.example.teamb.ui.components.PrimaryButton
 import com.example.teamb.ui.components.SurfaceCard
 import com.example.teamb.ui.theme.AccentBlue
@@ -222,8 +222,8 @@ private fun PasswordStep(state: OnboardingUiState, vm: OnboardingViewModel, scop
     Spacer(Modifier.height(12.dp))
     SurfaceCard {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            AppTextField(state.password, { vm.setPasswords(it, state.confirm) }, "Password", visualTransformation = PasswordVisualTransformation())
-            AppTextField(state.confirm, { vm.setPasswords(state.password, it) }, "Confirm password", isError = state.passwordError != null, visualTransformation = PasswordVisualTransformation())
+            PasswordTextField(state.password, { vm.setPasswords(it, state.confirm) }, "Password")
+            PasswordTextField(state.confirm, { vm.setPasswords(state.password, it) }, "Confirm password", isError = state.passwordError != null)
             state.passwordError?.let { Text(it, color = IssueText, style = MaterialTheme.typography.labelSmall) }
         }
     }
@@ -267,10 +267,7 @@ fun LoginScreen(container: AppContainer, onUnlocked: () -> Unit) {
         Spacer(Modifier.height(28.dp))
         SurfaceCard {
             Column {
-                AppTextField(
-                    state.password, vm::onPasswordChange, "Password",
-                    isError = state.error != null, visualTransformation = PasswordVisualTransformation(),
-                )
+                PasswordTextField(state.password, vm::onPasswordChange, "Password", isError = state.error != null)
                 state.error?.let { Text(it, color = IssueText, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(top = 8.dp)) }
                 Spacer(Modifier.height(16.dp))
                 PrimaryButton("Unlock", vm::submit)

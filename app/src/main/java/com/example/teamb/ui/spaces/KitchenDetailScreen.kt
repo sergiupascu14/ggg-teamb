@@ -350,7 +350,7 @@ private fun FreezerRow(item: FreezerItemEntity, onCheckOut: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(shape = CircleShape, color = AccentBlue, modifier = Modifier.size(44.dp)) {
-            Box(contentAlignment = Alignment.Center) { Text("🥚", style = MaterialTheme.typography.titleMedium) }
+            Box(contentAlignment = Alignment.Center) { Text("🧊", style = MaterialTheme.typography.titleMedium) }
         }
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Text(item.label, style = MaterialTheme.typography.titleSmall, color = TextPrimary)

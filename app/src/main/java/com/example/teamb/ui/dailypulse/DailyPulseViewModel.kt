@@ -73,11 +73,17 @@ class DailyPulseViewModel(
         weekJob?.cancel()
         // Rolling last 7 days ending today.
         val weekDates = Dates.lastSevenDays(clock.nowMillis())
+        val today = Dates.isoDate(clock.nowMillis())
         weekJob = viewModelScope.launch {
             pulseSync.observeWeek(weekDates).collect { records ->
                 val u = user
                 val weekly = PulseAggregator.weekly(records, weekDates, u?.userId, u?.building, u?.floor)
-                _state.update { it.copy(weekly = weekly) }
+                // If Firebase already has today's entry for this user (e.g. submitted from another
+                // device or a previous session before local DB was cleared), honour it so the UI
+                // doesn't show the form while the graph already has today's point.
+                val submittedToday = u?.userId != null &&
+                    records.any { it.userId == u.userId && it.date == today }
+                _state.update { it.copy(weekly = weekly, checkedInToday = it.checkedInToday || submittedToday) }
             }
         }
     }

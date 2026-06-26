@@ -48,11 +48,11 @@ object Routes {
     }
 }
 
-/** Bottom navigation tabs. Community sits in the middle as the primary shared surface. */
+/** Bottom navigation tabs. Hub sits in the middle as the primary shared surface. */
 enum class Tab(val route: String, val label: String, val icon: ImageVector) {
     PULSE(Routes.PULSE, "Pulse", Icons.Filled.Favorite),
     SPACES(Routes.SPACES, "Spaces", Icons.Filled.Apartment),
-    NEWSFEED(Routes.NEWSFEED, "Community", Icons.Filled.Public),
+    NEWSFEED(Routes.NEWSFEED, "Hub", Icons.Filled.Public),
     REPORT(Routes.REPORT, "Report", Icons.AutoMirrored.Filled.Chat),
     PROFILE(Routes.PROFILE, "Profile", Icons.Filled.Person),
 }

@@ -71,7 +71,7 @@ import com.example.teamb.ui.theme.TextMuted
 import com.example.teamb.ui.theme.TextPrimary
 import com.example.teamb.ui.theme.TextSecondary
 
-private val MOODS = listOf("😞", "🙁", "😐", "🙂", "😄")
+private val MOODS = listOf("😄", "🙂", "😐", "🙁", "😞")
 
 // Distinct, theme-stable series colors for the weekly graph.
 private val YOU_COLOR = FlameOrange
@@ -157,7 +157,7 @@ private fun PulseForm(submitting: Boolean, onSubmit: (Int, String?) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 MOODS.forEachIndexed { index, emoji ->
-                    val value = index + 1
+                    val value = MOODS.size - index
                     val selected = mood == value
                     Surface(
                         modifier = Modifier.size(48.dp).selectable(selected) { mood = value },
